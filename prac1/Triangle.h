@@ -28,6 +28,5 @@ class Triangle: public Shape<n> {
         }
 };
 
-#include "Triangle.cpp"
 
 #endif /*TRIANGLE_H*/

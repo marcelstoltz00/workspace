@@ -7,8 +7,7 @@
 #include <iomanip>
 #include <initializer_list>
 
-#include "Vector.h"
-
+// Forward declaration to avoid recursive include
 template <int n>
 class Vector;
 
@@ -36,9 +35,9 @@ public:
     
     Matrix<n,m>& operator=(const Matrix<n,m>&);
     template<int a>
-    Matrix<n,a> operator*(const Matrix<m,a>) const;
-    Matrix<n,m> operator*(const float) const;
-    Matrix<n,m> operator+(const Matrix<n,m>) const;
+    Matrix<n,a> operator*(const Matrix<m,a> &other) const;
+    Matrix<n,m> operator*(const float scalar) const;
+    Matrix<n,m> operator+(const Matrix<n,m> &other) const;
     Matrix<m,n> operator~() const;
     void print() const
     {
@@ -59,6 +58,6 @@ public:
     
 };
 
-#include "Matrix.cpp"
+// #include "Matrix.cpp"
 
 #endif /*MATRIX_H*/

@@ -5,6 +5,8 @@
 #include "Matrix.h"
 #include "Vector.h"
 
+using namespace std;
+
 template <int n>
 class Square: public Shape<n> {
     private:
@@ -32,7 +34,5 @@ class Square: public Shape<n> {
             bl.print();
         }
 };
-
-#include "Square.cpp"
 
 #endif /*SQUARE_H*/

@@ -2,6 +2,7 @@
 #define VECTOR_H
 
 #include <initializer_list>
+#include <iostream>
 #include "Matrix.h"
 
 template<int n, int m>
@@ -47,7 +48,5 @@ public:
         std::cout << std::endl;
     };
 };
-
-#include "Vector.cpp"
 
 #endif /*VECTOR_H*/
