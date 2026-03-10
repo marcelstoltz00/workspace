@@ -1,16 +1,15 @@
-// simple.vert
-// Responsibility:
-// - Vertex shader for 2D scene rendering.
-// - Accepts per-vertex position input and outputs clip-space position.
-// - Keeps vertex stage minimal so color control is handled in fragment shader.
-
 #version 330 core
 
-// Skeleton declarations only.
 layout(location = 0) in vec2 inPosition;
+
+// Optional future uniforms (leave commented until needed):
+// uniform mat4 model;
+// uniform mat4 view;
+// uniform mat4 projection;
 
 void main()
 {
-	// TODO: assign clip-space position once implementation starts.
+    // Minimal pass-through skeleton.
+    // Replace with model/view/projection multiplication later if needed.
+    gl_Position = vec4(inPosition, 0.0, 1.0);
 }
-
