@@ -1,5 +1,6 @@
 #ifndef SQUARE_CPP
 #define SQUARE_CPP
+#define SQUARE_CPP_COMPILATION_UNIT
 #include "Square.h"
 
 template <int n>

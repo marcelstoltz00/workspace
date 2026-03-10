@@ -1,6 +1,7 @@
 
 #ifndef TRIANGLE_CPP
 #define TRIANGLE_CPP
+#define TRIANGLE_CPP_COMPILATION_UNIT
 #include "Triangle.h"
 
 template <int n>

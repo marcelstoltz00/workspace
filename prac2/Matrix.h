@@ -5,9 +5,6 @@
 #include <cmath>
 #include <iomanip>
 
-
-#include "Vector.h"
-
 template <int n>
 class Vector;
 
@@ -57,7 +54,8 @@ public:
 
     
 };
-
+#ifndef MATRIX_CPP_COMPILATION_UNIT
 #include "Matrix.cpp"
+#endif
 
 #endif /*MATRIX_H*/

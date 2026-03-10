@@ -1,7 +1,9 @@
 #ifndef MATRIX_CPP
 #define MATRIX_CPP
+#define MATRIX_CPP_COMPILATION_UNIT
+#ifndef MATRIX_H
 #include "Matrix.h"
-#include <initializer_list>
+#endif
 #include <cmath>
 
 template <int n, int m>

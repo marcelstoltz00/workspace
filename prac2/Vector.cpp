@@ -1,6 +1,8 @@
 #ifndef VECTOR_CPP
 #define VECTOR_CPP
+#define VECTOR_CPP_COMPILATION_UNIT
 #include "Vector.h"
+#include "Matrix.h"
 #include <initializer_list>
 
 

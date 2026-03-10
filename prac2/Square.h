@@ -35,6 +35,8 @@ class Square: public Shape<n> {
         }
         virtual ~Square() {};
 };
+    #ifndef SQUARE_CPP_COMPILATION_UNIT
 #include "Square.cpp"
+    #endif
 
 #endif /*SQUARE_H*/

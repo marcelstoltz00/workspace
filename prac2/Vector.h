@@ -1,8 +1,8 @@
 #ifndef VECTOR_H
 #define VECTOR_H
 
+#include <iostream>
 #include <initializer_list>
-#include "Matrix.h"
 
 template<int n, int m>
 class Matrix;
@@ -48,6 +48,8 @@ public:
     };
 };
 
+#ifndef VECTOR_CPP_COMPILATION_UNIT
 #include "Vector.cpp"
+#endif
 
 #endif /*VECTOR_H*/

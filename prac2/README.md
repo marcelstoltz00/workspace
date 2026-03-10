@@ -2,6 +2,8 @@
 
 **Due Date:** 23-03-2026 at 10:00  
 **Total Marks:** 110 (+ 10 bonus)
+ 
+Technical implementation walkthrough: see TECHNICAL_GUIDE.md
 
 ## Requirements Checklist
 

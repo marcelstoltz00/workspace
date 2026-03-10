@@ -30,5 +30,7 @@ class Triangle: public Shape<n> {
            virtual ~Triangle() {}
 };
 
+#ifndef TRIANGLE_CPP_COMPILATION_UNIT
 #include "Triangle.cpp"
+#endif
 #endif /*TRIANGLE_H*/

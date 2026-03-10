@@ -1,0 +1,41 @@
+// Circle.h
+// Responsibility:
+// - Declares the Circle shape type used by the practical scene.
+// - Exposes constructors and geometry access methods used for drawing.
+// - Provides transform operators so circles can be moved/scaled/rotated
+//   with the same matrix pipeline as Square and Triangle.
+
+#ifndef CIRCLE_H
+#define CIRCLE_H
+
+#include "Shape.h"
+#include "Matrix.h"
+#include "Vector.h"
+
+template <int n>
+class Circle : public Shape<n> {
+private:
+	Vector<n> center;
+	float radius;
+	int vertexCount;
+
+public:
+	Circle(const Vector<n>& center, float radius, int vertexCount);
+	Circle(const Circle<n>& other);
+
+	virtual Circle<n>& operator*=(const Matrix<n, n>& matrix);
+	virtual Circle<n>* operator*(const Matrix<n, n>& matrix) const;
+
+	virtual float* getPoints() const;
+	virtual int getNumPoints() const;
+	virtual void print() const;
+
+	virtual ~Circle() {}
+};
+
+#ifndef CIRCLE_CPP_COMPILATION_UNIT
+#include "Circle.cpp"
+#endif
+
+#endif /*CIRCLE_H*/
+
