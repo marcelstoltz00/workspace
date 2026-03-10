@@ -1,3 +1,8 @@
+// simple.frag
+// Responsibility:
+// - Outputs a solid color for each fragment.
+// - Color is provided from CPU side via uniform.
+
 #version 330 core
 
 uniform vec3 inColor;
