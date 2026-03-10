@@ -12,8 +12,8 @@ You already have:
 
 What is still missing:
 - Actual scene data and object model
-- Circle implementation
-- Shader source files (vertex + fragment)
+- Integration of your Circle class into scene rendering
+- Final shader hookup inside main render pipeline
 - GPU upload/draw pipeline for multiple colored shapes
 - Selection logic (1,2,3,4,0)
 - Transform logic (W,A,S,D,+,-,Q,E)
@@ -26,21 +26,32 @@ What is still missing:
 - makefile: add any newly created .cpp files to files = ... if needed
 - README.md: keep checklist updated while implementing
 
-### New files you should create
-- Circle.h
-- Circle.cpp
-- simple.vert
-- simple.frag
+Important for your codebase:
+- You already have your own math/shape headers (`Vector.h`, `Matrix.h`, `Shape.h`, `Square.h`, `Triangle.h`, `Circle.h`).
+- Use those directly; do not introduce parallel math structs/classes in `main.cpp`.
+- Keep template implementation pattern consistent with your existing headers (the `#include "*.cpp"` at end of header style).
+
+### New files status in your project
+- `Circle.h`: created
+- `Circle.cpp`: created and implemented
+- `simple.vert`: created
+- `simple.frag`: created
 
 Optional but recommended (for cleaner code):
-- RenderObject.h
-- RenderObject.cpp
+- `RenderObject.h`: created
+- `RenderObject.cpp`: created
 
-If you keep everything inside main.cpp you can still pass, but optional RenderObject files make debugging easier.
+You can still keep most logic in `main.cpp` and use either:
+- your existing `golfObject` approach, or
+- `RenderObject` once you flesh it out.
+
+Pick one path and stay consistent.
 
 ## 3) Data Model You Need
 
 Create one runtime struct/class to represent each drawable object in the scene.
+
+For your current project, this should map to your existing `golfObject` (or `RenderObject`) instead of introducing a brand new scene type.
 
 Required fields:
 - object id/name (example: ball, hole, obstacleWood, obstacleRock)
@@ -64,7 +75,7 @@ Why this matters:
 
 ## 4) Implement Circle Geometry
 
-Create Circle.h/Circle.cpp similar to Square/Triangle template style.
+Use your existing `Circle.h`/`Circle.cpp` (already aligned to your Square/Triangle template style).
 
 Minimum API to support:
 - constructor(center, radius, vertexCount)
@@ -103,7 +114,7 @@ In main.cpp:
 
 ## 6) Build Scene Layout (Marks: Layout + Colours)
 
-In main.cpp, create a function like buildScene() and instantiate all required objects:
+In `main.cpp`, use your existing `buildscene()` function declaration and instantiate all required objects there.
 
 Required layout objects:
 - concrete floor (grey rectangle, not full screen)
@@ -554,18 +565,19 @@ Goal:
 - Finish the non-interactive marks first (layout + many colors).
 
 Steps:
-1. In `main.cpp`, create a simple local struct for now, e.g. `SceneDrawCall`:
-  - `std::vector<float> vertices`
-  - `glm::vec3 color`
-  - `GLenum mode`
-2. Add helper functions in `main.cpp`:
+1. In `main.cpp`, use your existing scene container setup:
+  - `struct golfObject { ... }`
+  - `vector<golfObject*> objects`
+  - global selection/wireframe state (`select`, `WF`, `lastTime`)
+2. Extend `golfObject` to include what you need (or switch fully to `RenderObject`, but do not mix both patterns halfway).
+3. Add helper functions in `main.cpp`:
   - `makeRect(cx, cy, w, h)`
   - `makeTriangle(...)`
   - temporary `makeCircleApprox(cx, cy, r, segments)`
-3. Add all required objects to a vector of draw calls:
+4. Add all required objects to your `objects` vector:
   - floor, grass, river, start zone, barriers, ball, hole, 3 obstacle types
-4. Draw all objects each frame in a loop.
-5. Set distinct background color with `glClearColor`.
+5. Draw all objects each frame in a loop.
+6. Set distinct background color with `glClearColor`.
 
 How to verify:
 - Scene visually contains all required components.
@@ -581,8 +593,8 @@ Goal:
 - Implement key-to-object selection and visual highlight.
 
 Steps:
-1. Give each object an ID string and category.
-2. Track `selectedObjectIndex` (or `-1` for none).
+1. Give each `golfObject` an ID/category field.
+2. Use your existing global selector (`select`) as the selected index (`-1` means none).
 3. Map keys:
   - `1` -> golf ball
   - `2` -> obstacle A
@@ -591,7 +603,7 @@ Steps:
   - `0` -> deselect
 4. Implement pastel color helper:
   - `pastel = base * 0.5f + vec3(1.0f) * 0.5f`
-5. During draw, if object is selected, use pastel color.
+5. During draw, if object index equals `select`, use pastel color.
 
 How to verify:
 - Pressing keys changes selected object and color highlight.
@@ -643,10 +655,10 @@ Goal:
 - Implement Enter toggle and GL_LINES path.
 
 Steps:
-1. Add `wireframeEnabled` boolean.
-2. Add Enter key debounce timer (150-250 ms).
+1. Use your existing `WF` boolean for wireframe mode.
+2. Use your existing `lastTime` as Enter debounce timer (150-250 ms).
 3. Build line-vertex versions for each shape.
-4. Draw lines with `GL_LINES` when wireframe is enabled.
+4. Draw lines with `GL_LINES` when `WF` is enabled.
 5. Keep same object colors in wireframe mode.
 
 How to verify:

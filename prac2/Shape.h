@@ -13,6 +13,7 @@ class Shape{
         virtual float* getPoints() const =0;
         virtual int getNumPoints() const =0;
         virtual void print() const =0;
+    virtual ~Shape() {}
      
 };
 
