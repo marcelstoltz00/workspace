@@ -1,5 +1,6 @@
 #ifndef VECTOR_CPP
 #define VECTOR_CPP
+#include "Vector.h"
 #include <initializer_list>
 
 

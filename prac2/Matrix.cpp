@@ -1,6 +1,9 @@
 #ifndef MATRIX_CPP
 #define MATRIX_CPP
+#include "Matrix.h"
 #include <initializer_list>
+#include <cmath>
+
 template <int n, int m>
 Matrix<n - 1, m - 1> subDetMatrixCalculator(const Matrix<n, m> &matriks, int ry, int kol);
 

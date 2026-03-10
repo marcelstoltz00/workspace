@@ -1,5 +1,6 @@
 #ifndef SQUARE_CPP
 #define SQUARE_CPP
+#include "Square.h"
 
 template <int n>
 Square<n>::Square(const Vector<n>& center, float height, float width) {

@@ -75,5 +75,35 @@ int main()
         throw;
     }
 
-    //Add code here
+    cout << "Window created successfully. Press ESC or close window to exit." << endl;
+
+    // Set background color
+    glClearColor(0.0f, 0.0f, 0.4f, 0.0f);
+
+    // Main rendering loop
+    int frameCount = 0;
+    do {
+        // Clear the screen
+        glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+
+        //Add code here
+
+        // Swap buffers
+        glfwSwapBuffers(window);
+        glfwPollEvents();
+
+        frameCount++;
+        if (frameCount == 1) {
+            cout << "Rendering started..." << endl;
+        }
+
+    } while (glfwGetKey(window, GLFW_KEY_ESCAPE) != GLFW_PRESS &&
+             glfwWindowShouldClose(window) == 0);
+
+    cout << "Closing window. Rendered " << frameCount << " frames." << endl;
+
+    // Cleanup
+    glfwTerminate();
+
+    return 0;
 }

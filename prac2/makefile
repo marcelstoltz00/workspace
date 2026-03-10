@@ -1,8 +1,12 @@
 #add all the files that you need to the files makefile variable below as a space seperated list
-files = 
+files = Matrix.cpp Vector.cpp Square.cpp Triangle.cpp
 
-main: main.cpp glad.c
-	g++ -g Shader.cpp $(files) main.cpp glad.c -lglfw3 -pthread -lGLEW -ldl -lGL -o main
+# Homebrew paths for macOS
+CFLAGS = -I/opt/homebrew/include -I/usr/local/include
+LDFLAGS = -L/opt/homebrew/lib -L/usr/local/lib
+
+main: main.cpp
+	g++ -g $(CFLAGS) shader.cpp $(files) main.cpp $(LDFLAGS) -lglfw -lGLEW -framework OpenGL -o main
 
 clean:
 	rm -f *.o main
