@@ -1,0 +1,6 @@
+-std=c++17
+-I/opt/homebrew/include
+-I/opt/homebrew/opt/glew/include
+-I/opt/homebrew/opt/glfw/include
+-I/usr/local/include
+-F/Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/System/Library/Frameworks
