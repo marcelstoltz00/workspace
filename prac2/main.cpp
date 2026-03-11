@@ -3,6 +3,8 @@
 #include <iostream>
 #include <string>
 #include <vector>
+#include <algorithm>
+#include <cmath>
 #include <thread>
 #include <random>
 #include <chrono>
@@ -27,7 +29,8 @@ enum type_of_object // only selected objects of a type can be transformed
     obj_BALL = 1,
     obj_OBSTACLE_A = 2,
     obj_OBSTACLE_B = 3,
-    obj_HOLE = 4
+    obj_HOLE = 4,
+    obj_OBSTACLE_C = 5  
 };
 
 const char *getError()
@@ -81,7 +84,7 @@ struct golfObject
     }
 };
 vector<golfObject *> objects;
-int select = -1;
+golfObject *selectedObject = NULL;
 bool WF = false;
 double lastTime = 0.0;
 
@@ -90,28 +93,104 @@ vec3 toPastel(const vec3 &c)
     return c * 0.5f + vec3(1.0f, 1.0f, 1.0f) * 0.5f;
 }
 
+golfObject *findNextOfType(int type)
+{
+    if (objects.empty())
+        return NULL;
+
+    int startIndex = -1;
+    if (selectedObject != NULL)
+    {
+        for (size_t i = 0; i < objects.size(); i++)
+        {
+            if (objects[i] == selectedObject)
+            {
+                startIndex = (int)i;
+                break;
+            }
+        }
+    }
+
+    for (size_t step = 1; step <= objects.size(); step++)
+    {
+        int idx = (startIndex + (int)step) % (int)objects.size();
+        if (objects[idx] != NULL && objects[idx]->type == type)
+            return objects[idx];
+    }
+
+    return NULL;
+}
+
 void handleSelectionKeys(GLFWwindow *window)
 {
-    if (glfwGetKey(window, GLFW_KEY_1) == GLFW_PRESS)
-        select = obj_BALL;
-    if (glfwGetKey(window, GLFW_KEY_2) == GLFW_PRESS)
-        select = obj_OBSTACLE_A;
-    if (glfwGetKey(window, GLFW_KEY_3) == GLFW_PRESS)
-        select = obj_OBSTACLE_B;
-    if (glfwGetKey(window, GLFW_KEY_4) == GLFW_PRESS)
-        select = obj_HOLE;
-    if (glfwGetKey(window, GLFW_KEY_0) == GLFW_PRESS)
-        select = -1;
+    static bool key1Down = false;
+    static bool key2Down = false;
+    static bool key3Down = false;
+    static bool key4Down = false;
+    static bool key5down = false;
+    static bool key0Down = false;
+
+    bool key1Pressed = glfwGetKey(window, GLFW_KEY_1) == GLFW_PRESS;
+    bool key2Pressed = glfwGetKey(window, GLFW_KEY_2) == GLFW_PRESS;
+    bool key3Pressed = glfwGetKey(window, GLFW_KEY_3) == GLFW_PRESS;
+    bool key4Pressed = glfwGetKey(window, GLFW_KEY_4) == GLFW_PRESS;
+    bool key0Pressed = glfwGetKey(window, GLFW_KEY_0) == GLFW_PRESS;
+    bool key5Pressed = glfwGetKey(window, GLFW_KEY_5) == GLFW_PRESS;
+
+    if (key1Pressed && !key1Down)
+        selectedObject = findNextOfType(obj_BALL);
+    if (key2Pressed && !key2Down)
+        selectedObject = findNextOfType(obj_OBSTACLE_A);
+    if (key3Pressed && !key3Down)
+        selectedObject = findNextOfType(obj_OBSTACLE_B);
+    if (key5Pressed && !key5down)
+        selectedObject = findNextOfType(obj_OBSTACLE_C);
+    if (key4Pressed && !key4Down)
+        selectedObject = findNextOfType(obj_HOLE);
+    if (key0Pressed && !key0Down)
+        selectedObject = NULL;
+
+    key1Down = key1Pressed;
+    key2Down = key2Pressed;
+    key3Down = key3Pressed;
+    key4Down = key4Pressed;
+    key0Down = key0Pressed;
+    key5down = key5Pressed;
 }
 
 void handleTransformKeys(GLFWwindow *window)
 {
-    // TODO: Apply transforms to selected object only.
-    //  W/S/A/D -> translation
-    //  +/-     -> scale around object center
-    //  Q/E     -> rotation around object center
-    // Keep transformations cumulative.
-    (void)window;
+    if (selectedObject == NULL)
+        return;
+
+    const float moveStep = 0.01f;
+    const float scaleStep = 0.01f;
+    const float rotateStep = 2.0f;
+
+    if (glfwGetKey(window, GLFW_KEY_W) == GLFW_PRESS)
+        selectedObject->position.y += moveStep;
+    if (glfwGetKey(window, GLFW_KEY_S) == GLFW_PRESS)
+        selectedObject->position.y -= moveStep;
+    if (glfwGetKey(window, GLFW_KEY_A) == GLFW_PRESS)
+        selectedObject->position.x -= moveStep;
+    if (glfwGetKey(window, GLFW_KEY_D) == GLFW_PRESS)
+        selectedObject->position.x += moveStep;
+
+    if (glfwGetKey(window, GLFW_KEY_EQUAL) == GLFW_PRESS || glfwGetKey(window, GLFW_KEY_KP_ADD) == GLFW_PRESS)
+    {
+        selectedObject->scale.x += scaleStep;
+        selectedObject->scale.y += scaleStep;
+    }
+    if (glfwGetKey(window, GLFW_KEY_MINUS) == GLFW_PRESS || glfwGetKey(window, GLFW_KEY_KP_SUBTRACT) == GLFW_PRESS)
+    {
+        selectedObject->scale.x = std::max(0.05f, selectedObject->scale.x - scaleStep);
+        selectedObject->scale.y = std::max(0.05f, selectedObject->scale.y - scaleStep);
+    }
+
+    if (glfwGetKey(window, GLFW_KEY_Q) == GLFW_PRESS)
+        selectedObject->rotationDeg += rotateStep;
+    if (glfwGetKey(window, GLFW_KEY_E) == GLFW_PRESS)
+        selectedObject->rotationDeg -= rotateStep;
 }
 
 void handleWireframeToggle(GLFWwindow *window)
@@ -146,23 +225,80 @@ void drawObjects(GLuint progID, GLuint clrLOC, GLuint aspectLOC, float aspect, G
         if (numPoints == 0)
             continue;
 
-        //  copy these vertices into the objects own vector without changing the OG shapes data
+        float centerX = 0.0f;
+        float centerY = 0.0f;
+        for (int j = 0; j < numPoints; j++)
+        {
+            centerX += rawVerts[j * 3 + 0];
+            centerY += rawVerts[j * 3 + 1];
+        }
+        centerX /= (float)numPoints;
+        centerY /= (float)numPoints;
+
+        float radians = obj->rotationDeg * 3.14159265f / 180.0f;
+        float cosine = cosf(radians);
+        float sine = sinf(radians);
+
+        // Copy transformed shape vertices for filled rendering.
         obj->fillVertices.clear();
-        for (int j = 0; j < numPoints * 3; j++)
-            obj->fillVertices.push_back(rawVerts[j]);
+        for (int j = 0; j < numPoints; j++)
+        {
+            float x = rawVerts[j * 3 + 0];
+            float y = rawVerts[j * 3 + 1];
+            float z = rawVerts[j * 3 + 2];
 
-        // upload to GPU(but haha mac has integrated)
-        glBufferData(GL_ARRAY_BUFFER, obj->fillVertices.size() * sizeof(float),
-                     obj->fillVertices.data(), GL_DYNAMIC_DRAW);
+            float localX = x - centerX;
+            float localY = y - centerY;
 
-        // how do we read the vbo and how do we send it to the shader->without this shader won't receive any data aka for every vertex you draw extract 3 floats from vbo and pass them to the shader as inposition
+            localX *= obj->scale.x;
+            localY *= obj->scale.y;
+
+            float rotatedX = localX * cosine - localY * sine;
+            float rotatedY = localX * sine + localY * cosine;
+
+            obj->fillVertices.push_back(centerX + rotatedX + obj->position.x);
+            obj->fillVertices.push_back(centerY + rotatedY + obj->position.y);
+            obj->fillVertices.push_back(z);
+        }
+
+        // Build explicit line segments for wireframe rendering.
+        obj->wireVertices.clear();
+        for (int j = 0; j < numPoints; j++)
+        {
+            int next = (j + 1) % numPoints;
+            for (int k = 0; k < 3; k++)
+                obj->wireVertices.push_back(obj->fillVertices[j * 3 + k]);
+            for (int k = 0; k < 3; k++)
+                obj->wireVertices.push_back(obj->fillVertices[next * 3 + k]);
+        }
+
+        vector<float> &activeVertices = WF ? obj->wireVertices : obj->fillVertices;
+
+        // Upload active geometry to GPU.
+        glBufferData(GL_ARRAY_BUFFER, activeVertices.size() * sizeof(float),
+                     activeVertices.data(), GL_DYNAMIC_DRAW);
+
+        // Tell OpenGL how to interpret the vertex data.
         glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(float), (void *)0);
         glEnableVertexAttribArray(0);
 
-        // set the actual colour
-        vec3 c = (obj->selected ? obj->pastelColor : obj->baseColor);
+        // Use a strong outline colour in wireframe mode so edges are easy to read.
+        vec3 c = WF ? vec3(0.05f, 0.05f, 0.05f)
+                    : (obj->selected ? obj->pastelColor : obj->baseColor);
         glUniform3f(clrLOC, c.x, c.y, c.z);
-        glDrawArrays(WF ? GL_LINE_LOOP : GL_TRIANGLE_FAN, 0, numPoints);
+
+        if (WF)
+        {
+            glLineWidth(2.0f);
+            glDrawArrays(GL_LINES, 0, (GLsizei)obj->wireVertices.size() / 3);
+            glLineWidth(1.0f);
+        }
+        else
+        {
+            glDrawArrays(GL_TRIANGLE_FAN, 0, numPoints);
+        }
+
+        delete[] rawVerts;
     }
 }
 
@@ -190,6 +326,15 @@ void buildscene()
     concrete->pastelColor = toPastel(concrete->baseColor);
     objects.push_back(concrete);
 
+    // One large border rectangle between concrete and grass
+    golfObject *border = new golfObject();
+    border->id = "course_border";
+    border->type = obj_DECOR;
+    border->shape = new Square<3>(Vector<3>({0.0f, 0.0f, 0.0f}), 1.80f, 2.65f);
+    border->baseColor = vec3(0.28f, 0.17f, 0.09f);
+    border->pastelColor = toPastel(border->baseColor);
+    objects.push_back(border);
+
     // Inner grass patch (slightly smaller than concrete)
     golfObject *grass = new golfObject();
     grass->id = "grass_patch";
@@ -199,78 +344,7 @@ void buildscene()
     grass->pastelColor = toPastel(grass->baseColor);
     objects.push_back(grass);
 
-    // 9 small dark-brown border rectangles between grass and concrete
-    golfObject *b1 = new golfObject();
-    b1->id = "border_1";
-    b1->type = obj_DECOR;
-    b1->shape = new Square<3>(Vector<3>({-1.10f, 0.86f, 0.0f}), 0.10f, 0.20f);
-    b1->baseColor = vec3(0.28f, 0.17f, 0.09f);
-    b1->pastelColor = toPastel(b1->baseColor);
-    objects.push_back(b1);
 
-    golfObject *b2 = new golfObject();
-    b2->id = "border_2";
-    b2->type = obj_DECOR;
-    b2->shape = new Square<3>(Vector<3>({0.0f, 0.86f, 0.0f}), 0.10f, 0.20f);
-    b2->baseColor = vec3(0.28f, 0.17f, 0.09f);
-    b2->pastelColor = toPastel(b2->baseColor);
-    objects.push_back(b2);
-
-    golfObject *b3 = new golfObject();
-    b3->id = "border_3";
-    b3->type = obj_DECOR;
-    b3->shape = new Square<3>(Vector<3>({1.10f, 0.86f, 0.0f}), 0.10f, 0.20f);
-    b3->baseColor = vec3(0.28f, 0.17f, 0.09f);
-    b3->pastelColor = toPastel(b3->baseColor);
-    objects.push_back(b3);
-
-    golfObject *b4 = new golfObject();
-    b4->id = "border_4";
-    b4->type = obj_DECOR;
-    b4->shape = new Square<3>(Vector<3>({-1.26f, 0.0f, 0.0f}), 0.18f, 0.10f);
-    b4->baseColor = vec3(0.28f, 0.17f, 0.09f);
-    b4->pastelColor = toPastel(b4->baseColor);
-    objects.push_back(b4);
-
-    golfObject *b5 = new golfObject();
-    b5->id = "border_5";
-    b5->type = obj_DECOR;
-    b5->shape = new Square<3>(Vector<3>({1.26f, 0.0f, 0.0f}), 0.18f, 0.10f);
-    b5->baseColor = vec3(0.28f, 0.17f, 0.09f);
-    b5->pastelColor = toPastel(b5->baseColor);
-    objects.push_back(b5);
-
-    golfObject *b6 = new golfObject();
-    b6->id = "border_6";
-    b6->type = obj_DECOR;
-    b6->shape = new Square<3>(Vector<3>({-1.10f, -0.86f, 0.0f}), 0.10f, 0.20f);
-    b6->baseColor = vec3(0.28f, 0.17f, 0.09f);
-    b6->pastelColor = toPastel(b6->baseColor);
-    objects.push_back(b6);
-
-    golfObject *b7 = new golfObject();
-    b7->id = "border_7";
-    b7->type = obj_DECOR;
-    b7->shape = new Square<3>(Vector<3>({0.0f, -0.86f, 0.0f}), 0.10f, 0.20f);
-    b7->baseColor = vec3(0.28f, 0.17f, 0.09f);
-    b7->pastelColor = toPastel(b7->baseColor);
-    objects.push_back(b7);
-
-    golfObject *b8 = new golfObject();
-    b8->id = "border_8";
-    b8->type = obj_DECOR;
-    b8->shape = new Square<3>(Vector<3>({1.10f, -0.86f, 0.0f}), 0.10f, 0.20f);
-    b8->baseColor = vec3(0.28f, 0.17f, 0.09f);
-    b8->pastelColor = toPastel(b8->baseColor);
-    objects.push_back(b8);
-
-    golfObject *b9 = new golfObject();
-    b9->id = "border_9";
-    b9->type = obj_DECOR;
-    b9->shape = new Square<3>(Vector<3>({0.55f, 0.86f, 0.0f}), 0.10f, 0.20f);
-    b9->baseColor = vec3(0.28f, 0.17f, 0.09f);
-    b9->pastelColor = toPastel(b9->baseColor);
-    objects.push_back(b9);
 
     // Start area
     golfObject *start = new golfObject();
@@ -285,25 +359,25 @@ void buildscene()
     golfObject *river = new golfObject();
     river->id = "river";
     river->type = obj_DECOR;
-    river->shape = new Square<3>(Vector<3>({0.0f, 0.0f, 0.0f}), 0.20f, 2.30f);
+    river->shape = new Square<3>(Vector<3>({0.0f, 0.0f, 0.0f}), 0.20f, 2.45f);
     river->baseColor = vec3(0.15f, 0.42f, 0.86f);
     river->pastelColor = toPastel(river->baseColor);
     objects.push_back(river);
 
-    // Left wall: rises 3/4 of floor height near 1/3 of base
+    // Left divider wall: 3/4 of grass height, near left third
     golfObject *wallLeft = new golfObject();
     wallLeft->id = "wall_left";
     wallLeft->type = obj_DECOR;
-    wallLeft->shape = new Square<3>(Vector<3>({-0.30f, -0.225f, 0.0f}), 1.35f, 0.06f);
+    wallLeft->shape = new Square<3>(Vector<3>({-0.42f, -0.21f, 0.0f}), 1.24f, 0.07f);
     wallLeft->baseColor = vec3(0.28f, 0.17f, 0.09f);
     wallLeft->pastelColor = toPastel(wallLeft->baseColor);
     objects.push_back(wallLeft);
 
-    // Right wall: drops 3/4 of floor height near 2/3 of base
+    // Right divider wall: 3/4 of grass height, near right third
     golfObject *wallRight = new golfObject();
     wallRight->id = "wall_right";
     wallRight->type = obj_DECOR;
-    wallRight->shape = new Square<3>(Vector<3>({0.30f, 0.225f, 0.0f}), 1.35f, 0.06f);
+    wallRight->shape = new Square<3>(Vector<3>({0.42f, 0.21f, 0.0f}), 1.24f, 0.07f);
     wallRight->baseColor = vec3(0.28f, 0.17f, 0.09f);
     wallRight->pastelColor = toPastel(wallRight->baseColor);
     objects.push_back(wallRight);
@@ -312,7 +386,7 @@ void buildscene()
     golfObject *bridge1 = new golfObject();
     bridge1->id = "bridge_1";
     bridge1->type = obj_DECOR;
-    bridge1->shape = new Square<3>(Vector<3>({-0.62f, 0.0f, 0.0f}), 0.20f, 0.12f);
+    bridge1->shape = new Square<3>(Vector<3>({-0.9f, 0.0f, 0.0f}), 0.20f, 0.1f);
     bridge1->baseColor = vec3(0.72f, 0.52f, 0.30f);
     bridge1->pastelColor = toPastel(bridge1->baseColor);
     objects.push_back(bridge1);
@@ -321,7 +395,7 @@ void buildscene()
     golfObject *bridge2 = new golfObject();
     bridge2->id = "bridge_2";
     bridge2->type = obj_DECOR;
-    bridge2->shape = new Square<3>(Vector<3>({0.00f, 0.0f, 0.0f}), 0.20f, 0.12f);
+    bridge2->shape = new Square<3>(Vector<3>({0.00f, 0.0f, 0.0f}), 0.20f, 0.21f);
     bridge2->baseColor = vec3(0.72f, 0.52f, 0.30f);
     bridge2->pastelColor = toPastel(bridge2->baseColor);
     objects.push_back(bridge2);
@@ -330,7 +404,7 @@ void buildscene()
     golfObject *bridgeSkew = new golfObject();
     bridgeSkew->id = "bridge_skew";
     bridgeSkew->type = obj_DECOR;
-    bridgeSkew->shape = new Square<3>(Vector<3>({0.62f, 0.0f, 0.0f}), 0.20f, 0.08f);
+    bridgeSkew->shape = new Square<3>(Vector<3>({0.8f, 0.0f, 0.0f}), 0.20f, 0.05f);
     bridgeSkew->baseColor = vec3(0.70f, 0.50f, 0.28f);
     bridgeSkew->pastelColor = toPastel(bridgeSkew->baseColor);
     objects.push_back(bridgeSkew);
@@ -341,7 +415,7 @@ void buildscene()
     ball->type = obj_BALL;
     ball->shape = new Circle<3>(Vector<3>({-0.72f, -0.72f, 0.0f}), 0.025f, 60);
     ball->baseColor = vec3(1.0f, 1.0f, 1.0f);
-    ball->pastelColor = toPastel(ball->baseColor);
+    ball->pastelColor =  vec3(0.0f,0.0f,0.0f);
     objects.push_back(ball);
 
     // Hole (dark)
@@ -357,27 +431,132 @@ void buildscene()
     golfObject *obsA1 = new golfObject();
     obsA1->id = "obstacle_a_1";
     obsA1->type = obj_OBSTACLE_A;
-    obsA1->shape = new Square<3>(Vector<3>({-0.10f, -0.45f, 0.0f}), 0.12f, 0.12f);
+    obsA1->shape = new Square<3>(Vector<3>({0.8f, -0.45f, 0.0f}), 0.12f, 0.12f);
     obsA1->baseColor = vec3(0.62f, 0.40f, 0.22f);
     obsA1->pastelColor = toPastel(obsA1->baseColor);
     objects.push_back(obsA1);
 
-    // Selectable obstacle type B (triangles)
+     golfObject *obsA3 = new golfObject();
+    obsA3->id = "obstacle_a_3";
+    obsA3->type = obj_OBSTACLE_A;
+    obsA3->shape = new Square<3>(Vector<3>({0.6f, -0.45f, 0.0f}), 0.12f, 0.12f);
+    obsA3->baseColor = vec3(0.62f, 0.40f, 0.22f);
+    obsA3->pastelColor = toPastel(obsA3->baseColor);
+    objects.push_back(obsA3);
+
+        // Selectable obstacle type A (squares)
+    golfObject *obsA2 = new golfObject();
+    obsA2->id = "obstacle_a_2";
+    obsA2->type = obj_OBSTACLE_A;
+    obsA2->shape = new Square<3>(Vector<3>({1.0f, -0.45f, 0.0f}), 0.12f, 0.12f);
+    obsA2->baseColor = vec3(0.62f, 0.40f, 0.22f);
+    obsA2->pastelColor = toPastel(obsA2->baseColor);
+    objects.push_back(obsA2);
+
+    // Selectable obstacle type B (9 mini triangles clustered between the walls)
     golfObject *obsB1 = new golfObject();
     obsB1->id = "obstacle_b_1";
     obsB1->type = obj_OBSTACLE_B;
     obsB1->shape = new Triangle<3>(
-        Vector<3>({0.08f, 0.50f, 0.0f}),
-        Vector<3>({0.22f, 0.30f, 0.0f}),
-        Vector<3>({-0.04f, 0.30f, 0.0f}));
+        Vector<3>({-0.24f, -0.19f, 0.0f}),
+        Vector<3>({-0.20f, -0.25f, 0.0f}),
+        Vector<3>({-0.28f, -0.25f, 0.0f}));
     obsB1->baseColor = vec3(0.92f, 0.46f, 0.14f);
     obsB1->pastelColor = toPastel(obsB1->baseColor);
     objects.push_back(obsB1);
 
+    golfObject *obsB2 = new golfObject();
+    obsB2->id = "obstacle_b_2";
+    obsB2->type = obj_OBSTACLE_B;
+    obsB2->shape = new Triangle<3>(
+        Vector<3>({-0.10f, -0.17f, 0.0f}),
+        Vector<3>({-0.06f, -0.22f, 0.0f}),
+        Vector<3>({-0.14f, -0.22f, 0.0f}));
+    obsB2->baseColor = vec3(0.92f, 0.46f, 0.14f);
+    obsB2->pastelColor = toPastel(obsB2->baseColor);
+    objects.push_back(obsB2);
+
+    golfObject *obsB3 = new golfObject();
+    obsB3->id = "obstacle_b_3";
+    obsB3->type = obj_OBSTACLE_B;
+    obsB3->shape = new Triangle<3>(
+        Vector<3>({0.03f, -0.20f, 0.0f}),
+        Vector<3>({0.07f, -0.27f, 0.0f}),
+        Vector<3>({-0.01f, -0.27f, 0.0f}));
+    obsB3->baseColor = vec3(0.92f, 0.46f, 0.14f);
+    obsB3->pastelColor = toPastel(obsB3->baseColor);
+    objects.push_back(obsB3);
+
+    golfObject *obsB4 = new golfObject();
+    obsB4->id = "obstacle_b_4";
+    obsB4->type = obj_OBSTACLE_B;
+    obsB4->shape = new Triangle<3>(
+        Vector<3>({0.18f, -0.18f, 0.0f}),
+        Vector<3>({0.22f, -0.24f, 0.0f}),
+        Vector<3>({0.14f, -0.24f, 0.0f}));
+    obsB4->baseColor = vec3(0.92f, 0.46f, 0.14f);
+    obsB4->pastelColor = toPastel(obsB4->baseColor);
+    objects.push_back(obsB4);
+
+    golfObject *obsB5 = new golfObject();
+    obsB5->id = "obstacle_b_5";
+    obsB5->type = obj_OBSTACLE_B;
+    obsB5->shape = new Triangle<3>(
+        Vector<3>({-0.18f, -0.33f, 0.0f}),
+        Vector<3>({-0.13f, -0.40f, 0.0f}),
+        Vector<3>({-0.23f, -0.40f, 0.0f}));
+    obsB5->baseColor = vec3(0.92f, 0.46f, 0.14f);
+    obsB5->pastelColor = toPastel(obsB5->baseColor);
+    objects.push_back(obsB5);
+
+    golfObject *obsB6 = new golfObject();
+    obsB6->id = "obstacle_b_6";
+    obsB6->type = obj_OBSTACLE_B;
+    obsB6->shape = new Triangle<3>(
+        Vector<3>({-0.02f, -0.36f, 0.0f}),
+        Vector<3>({0.02f, -0.42f, 0.0f}),
+        Vector<3>({-0.06f, -0.42f, 0.0f}));
+    obsB6->baseColor = vec3(0.92f, 0.46f, 0.14f);
+    obsB6->pastelColor = toPastel(obsB6->baseColor);
+    objects.push_back(obsB6);
+
+    golfObject *obsB7 = new golfObject();
+    obsB7->id = "obstacle_b_7";
+    obsB7->type = obj_OBSTACLE_B;
+    obsB7->shape = new Triangle<3>(
+        Vector<3>({0.14f, -0.34f, 0.0f}),
+        Vector<3>({0.18f, -0.39f, 0.0f}),
+        Vector<3>({0.10f, -0.39f, 0.0f}));
+    obsB7->baseColor = vec3(0.92f, 0.46f, 0.14f);
+    obsB7->pastelColor = toPastel(obsB7->baseColor);
+    objects.push_back(obsB7);
+
+    golfObject *obsB8 = new golfObject();
+    obsB8->id = "obstacle_b_8";
+    obsB8->type = obj_OBSTACLE_B;
+    obsB8->shape = new Triangle<3>(
+        Vector<3>({-0.11f, -0.50f, 0.0f}),
+        Vector<3>({-0.07f, -0.55f, 0.0f}),
+        Vector<3>({-0.15f, -0.55f, 0.0f}));
+    obsB8->baseColor = vec3(0.92f, 0.46f, 0.14f);
+    obsB8->pastelColor = toPastel(obsB8->baseColor);
+    objects.push_back(obsB8);
+
+    golfObject *obsB9 = new golfObject();
+    obsB9->id = "obstacle_b_9";
+    obsB9->type = obj_OBSTACLE_B;
+    obsB9->shape = new Triangle<3>(
+        Vector<3>({0.09f, -0.49f, 0.0f}),
+        Vector<3>({0.13f, -0.56f, 0.0f}),
+        Vector<3>({0.05f, -0.56f, 0.0f}));
+    obsB9->baseColor = vec3(0.92f, 0.46f, 0.14f);
+    obsB9->pastelColor = toPastel(obsB9->baseColor);
+    objects.push_back(obsB9);
+
     // Third unique obstacle combo (low-poly circle)
     golfObject *obsC1 = new golfObject();
     obsC1->id = "obstacle_c_1";
-    obsC1->type = obj_DECOR;
+    obsC1->type = obj_OBSTACLE_C;
     obsC1->shape = new Circle<3>(Vector<3>({-0.62f, 0.58f, 0.0f}), 0.06f, 8);
     obsC1->baseColor = vec3(0.56f, 0.24f, 0.48f);
     obsC1->pastelColor = toPastel(obsC1->baseColor);
@@ -395,7 +574,7 @@ inline GLFWwindow *setUp()
     glfwWindowHint(GLFW_DECORATED, GLFW_TRUE);
     glfwWindowHint(GLFW_MAXIMIZED, GLFW_TRUE);
     GLFWwindow *window;
-    window = glfwCreateWindow(1280, 800, "Experiment", NULL, NULL);
+    window = glfwCreateWindow(1280, 800, "U24566552 COS344 Practical 2", NULL, NULL);
     if (window == NULL)
     {
         cout << getError() << endl;
@@ -434,7 +613,7 @@ int main()
 
     buildscene();
 
-    glClearColor(1.0f, 1.0f, 1.0f, 1.0f);
+    glClearColor(0.5f, 0.0f, 1.0f, 1.0f);
 
     int frameCount = 0;
     do
@@ -452,13 +631,13 @@ int main()
         handleTransformKeys(window);
         handleWireframeToggle(window);
 
-        // sync selected type to object
+        // Sync exact selected object to object flags.
         for (size_t i = 0; i < objects.size(); i++)
         {
             golfObject *obj = objects[i];
             if (obj != NULL)
             {
-                obj->selected = (select != -1 && obj->type == select);
+                obj->selected = (obj == selectedObject);
             }
         }
 
