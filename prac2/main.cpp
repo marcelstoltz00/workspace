@@ -21,21 +21,8 @@
 
 #include "shader.hpp"
 
-// stb_easy_font for simple text rendering (add stb_easy_font.h to your project)
-#define STB_EASY_FONT_IMPLEMENTATION
-#include "stb_easy_font.h"
-
 using namespace glm;
 using namespace std;
-
-// Draws a filled rectangle in normalized device coordinates (NDC)
-void drawSidebarRect(float xMin, float xMax, float yMin, float yMax, float r, float g, float b, float a)
-{
-    glDisable(GL_DEPTH_TEST);
-    glUseProgram(0); // Use fixed-function pipeline for simplicity
-}
-
-
 
 using Vec2 = Vector<2>;
 using Vec3 = Vector<3>;
@@ -105,8 +92,8 @@ vector<golfObject *> selectedObjects;
 bool WF = false;
 double lastTime = 0.0;
 
-const float SCENE_MIN = -1.0f;
-const float SCENE_MAX = 1.0f;
+const float SCENE_MIN = -1.05f;
+const float SCENE_MAX = 1.05f;
 const char *LAYOUT_FILE = "layout.txt";
 
 void logLoopDiagnostics(GLFWwindow *window, int frameCount)
@@ -688,6 +675,26 @@ void buildscene()
     border->id = "course_border";
     border->type = obj_DECOR;
     border->shape = new Square<3>(Vector<3>({0.0f, 0.0f, 0.0f}), 1.80f, 2.65f);
+    border->baseColor = Vec3({0.28f, 0.17f, 0.09f});
+    border->pastelColor = toPastel(border->baseColor);
+    objects.push_back(border);
+    // GRAS
+    golfObject *grass = new golfObject();
+    grass->id = "grass_patch";
+    grass->type = obj_DECOR;
+    grass->shape = new Square<3>(Vector<3>({0.0f, 0.0f, 0.0f}), 1.65f, 2.45f);
+    grass->baseColor = Vec3({0.20f, 0.62f, 0.26f});
+    grass->pastelColor = toPastel(grass->baseColor);
+    objects.push_back(grass);
+
+    // BEGIN AREA
+    golfObject *start = new golfObject();
+    start->id = "start_area";
+    start->type = obj_DECOR;
+    start->shape = new Square<3>(Vector<3>({-0.72f, -0.72f, 0.0f}), 0.16f, 0.22f);
+    start->baseColor = Vec3({0.50f, 0.12f, 0.18f});
+    start->pastelColor = toPastel(start->baseColor);
+    objects.push_back(start);
 
     // RIVIER
     golfObject *river = new golfObject();
@@ -974,9 +981,10 @@ int main()
             }
         }
 
-
+        // Draw golf course objects
         drawObjects(progID, clrLOC, aspectLOC, aspect, VAO, VBO);
 
+        // Swap buffers
         glfwSwapBuffers(window);
         glfwPollEvents();
 
