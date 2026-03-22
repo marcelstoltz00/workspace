@@ -1,3 +1,4 @@
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <iostream>
@@ -92,8 +93,10 @@ vector<golfObject *> selectedObjects;
 bool WF = false;
 double lastTime = 0.0;
 
-const float SCENE_MIN = -1.05f;
-const float SCENE_MAX = 1.05f;
+const float SCENE_MIN_X = -0.9f;   
+const float SCENE_MAX_X = 0.9f;    // +width/2 of border
+const float SCENE_MIN_Y = -1.325f; // -height/2 of border
+const float SCENE_MAX_Y = 1.325f;  // +height/2 of border
 const char *LAYOUT_FILE = "layout.txt";
 
 void logLoopDiagnostics(GLFWwindow *window, int frameCount)
@@ -184,6 +187,77 @@ void addSelection(golfObject *obj)
     selectedObject = obj;
 }
 
+
+void handleDynamicObjectKeys(GLFWwindow *window)
+{
+    static bool cmdSDown = false;
+    static bool cmdTDown = false;
+    static bool cmdCDown = false;
+    static bool optDDown = false;
+
+    bool cmd = (glfwGetKey(window, GLFW_KEY_LEFT_SUPER) == GLFW_PRESS) || (glfwGetKey(window, GLFW_KEY_RIGHT_SUPER) == GLFW_PRESS);
+    bool opt = (glfwGetKey(window, GLFW_KEY_LEFT_ALT) == GLFW_PRESS) || (glfwGetKey(window, GLFW_KEY_RIGHT_ALT) == GLFW_PRESS);
+
+    bool sPressed = glfwGetKey(window, GLFW_KEY_S) == GLFW_PRESS;
+    bool tPressed = glfwGetKey(window, GLFW_KEY_T) == GLFW_PRESS;
+    bool cPressed = glfwGetKey(window, GLFW_KEY_C) == GLFW_PRESS;
+    bool dPressed = glfwGetKey(window, GLFW_KEY_D) == GLFW_PRESS;
+
+    if (cmd && sPressed && !cmdSDown) {
+        golfObject *sq = new golfObject();
+        sq->id = "user_square_" + to_string(rand());
+        sq->type =obj_OBSTACLE_A;
+        sq->shape = new Square<3>(Vector<3>({0.0f, 0.0f, 0.0f}), 0.2f, 0.2f);
+        sq->baseColor = Vec3({0.5f, 0.5f, 1.0f});
+        sq->pastelColor = toPastel(sq->baseColor);
+        objects.push_back(sq);
+     
+    }
+    if (cmd && tPressed && !cmdTDown) {
+        golfObject *tri = new golfObject();
+        tri->id = "user_triangle_" + to_string(rand());
+        tri->type = obj_OBSTACLE_B;
+        tri->shape = new Triangle<3>(
+            Vector<3>({-0.1f, -0.1f, 0.0f}),
+            Vector<3>({0.1f, -0.1f, 0.0f}),
+            Vector<3>({0.0f, 0.1f, 0.0f})
+        );
+        tri->baseColor = Vec3({1.0f, 0.5f, 0.5f});
+        tri->pastelColor = toPastel(tri->baseColor);
+        objects.push_back(tri);
+      
+    }
+    if (cmd && cPressed && !cmdCDown) {
+        golfObject *circ = new golfObject();
+        circ->id = "user_circle_" + to_string(rand());
+        circ->type = obj_OBSTACLE_C;
+        circ->shape = new Circle<3>(Vector<3>({0.0f, 0.0f, 0.0f}), 0.12f, 32);
+        circ->baseColor = Vec3({0.5f, 1.0f, 0.5f});
+        circ->pastelColor = toPastel(circ->baseColor);
+        objects.push_back(circ);
+      
+    }
+    if (opt && dPressed && !optDDown) {
+        if (!selectedObjects.empty()) {
+            for (golfObject *obj : selectedObjects) {
+                auto it = std::find(objects.begin(), objects.end(), obj);
+                if (it != objects.end()) {
+                    delete obj->shape;
+                    delete obj;
+                    objects.erase(it);
+                }
+            }
+           
+            clearSelection();
+        }
+    }
+
+    cmdSDown = cmd && sPressed;
+    cmdTDown = cmd && tPressed;
+    cmdCDown = cmd && cPressed;
+    optDDown = opt && dPressed;
+}
+
 void toggleSelection(golfObject *obj)
 {
     if (obj == NULL)
@@ -255,7 +329,7 @@ bool canMoveObjectBy(golfObject *obj, float dx, float dy)
     }
 
     delete[] rawVerts;
-    return minX >= SCENE_MIN && maxX <= SCENE_MAX && minY >= SCENE_MIN && maxY <= SCENE_MAX;
+    return true;
 }
 
 bool saveLayout(const string &path)
@@ -957,13 +1031,15 @@ int main()
     bool shouldExit = false;
     do
     {
-
         int fbW = 1, fbH = 1;
         glfwGetFramebufferSize(window, &fbW, &fbH);
         glViewport(0, 0, fbW, fbH);
         float aspect = (fbH != 0) ? (float)fbW / (float)fbH : 1.0f;
 
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT); // clear screen
+
+        // Dynamic add/remove
+        handleDynamicObjectKeys(window);
 
         // iNPUTS LOGGING
         handleSelectionKeys(window);
