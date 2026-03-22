@@ -1,10 +1,3 @@
-// Circle.h
-// Responsibility:
-// - Declares the Circle shape type used by the practical scene.
-// - Exposes constructors and geometry access methods used for drawing.
-// - Provides transform operators so circles can be moved/scaled/rotated
-//   with the same matrix pipeline as Square and Triangle.
-
 #ifndef CIRCLE_H
 #define CIRCLE_H
 
