@@ -7,9 +7,6 @@
 #include <algorithm>
 #include <cmath>
 #include <fstream>
-#include <thread>
-#include <random>
-#include <chrono>
 #include "Square.h"
 #include "Circle.h"
 #include "Triangle.h"
@@ -383,6 +380,7 @@ bool loadLayout(const string &path)
     if (!(in >> count))
         return false;
 
+
     for (size_t i = 0; i < count; i++)
     {
         string id;
@@ -397,22 +395,41 @@ bool loadLayout(const string &path)
             return false;
 
         golfObject *target = findObjectByIdAndType(id, type);
-        if (target != NULL)
-        {
-            target->position = Vec2({px, py});
-            target->scale = Vec2({sx, sy});
-            target->rotationDeg = rot;
-            target->baseColor = Vec3({br, bg, bb});
-            target->pastelColor = Vec3({pr, pg, pb});
-
-            if (target->type == obj_BALL)
-            {
-                const float diff = fabsf(target->pastelColor[0] - target->baseColor[0]) +
-                                   fabsf(target->pastelColor[1] - target->baseColor[1]) +
-                                   fabsf(target->pastelColor[2] - target->baseColor[2]);
-                if (diff < 0.02f)
-                    target->pastelColor = Vec3({1.0f, 0.85f, 0.35f});
+        if (target == NULL) {
+            golfObject *obj = new golfObject();
+            obj->id = id;
+            obj->type = type;
+            if (type == obj_OBSTACLE_A) {
+                obj->shape = new Square<3>(Vector<3>({0.0f, 0.0f, 0.0f}), 0.2f, 0.2f);
+            } else if (type == obj_OBSTACLE_B) {
+                obj->shape = new Triangle<3>(
+                    Vector<3>({-0.1f, -0.1f, 0.0f}),
+                    Vector<3>({0.1f, -0.1f, 0.0f}),
+                    Vector<3>({0.0f, 0.1f, 0.0f})
+                );
+            } else if (type == obj_OBSTACLE_C) {
+                obj->shape = new Circle<3>(Vector<3>({0.0f, 0.0f, 0.0f}), 0.12f, 32);
+            } else {
+                delete obj;
+                continue;
             }
+            objects.push_back(obj);
+            target = obj;
+        }
+
+        target->position = Vec2({px, py});
+        target->scale = Vec2({sx, sy});
+        target->rotationDeg = rot;
+        target->baseColor = Vec3({br, bg, bb});
+        target->pastelColor = Vec3({pr, pg, pb});
+
+        if (target->type == obj_BALL)
+        {
+            const float diff = fabsf(target->pastelColor[0] - target->baseColor[0]) +
+                               fabsf(target->pastelColor[1] - target->baseColor[1]) +
+                               fabsf(target->pastelColor[2] - target->baseColor[2]);
+            if (diff < 0.02f)
+                target->pastelColor = Vec3({1.0f, 0.85f, 0.35f});
         }
     }
 
