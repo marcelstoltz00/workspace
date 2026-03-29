@@ -1,0 +1,9 @@
+-x
+c++
+-std=c++17
+-isysroot
+/Library/Developer/CommandLineTools/SDKs/MacOSX.sdk
+-I/opt/homebrew/include
+-I/opt/homebrew/opt/glew/include
+-I/opt/homebrew/opt/glfw/include
+-F/Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/System/Library/Frameworks

@@ -167,4 +167,70 @@ Matrix<n - 1, m - 1> subDetMatrixCalculator(const Matrix<n, m> &matriks, int ry,
   return answer;
 }
 
+
+
+template <int n, int m> 
+Matrix<4, 4> Matrix<n, m>::identity() {
+    Matrix<4, 4> result;
+    for (int i = 0; i < 4; i++) {
+        result[i][i] = 1.0f; // Set diagonal to 1
+    }
+    return result;
+}
+
+template <int n, int m> 
+Matrix<4, 4> Matrix<n, m>::translate(float tx, float ty, float tz) {
+    Matrix<4, 4> result = Matrix<4, 4>::identity();
+    result[0][3] = tx;
+    result[1][3] = ty;
+    result[2][3] = tz;
+    return result;
+}
+
+template <int n, int m> 
+Matrix<4, 4> Matrix<n, m>::scale(float sx, float sy, float sz) {
+    Matrix<4, 4> result;
+    result[0][0] = sx;
+    result[1][1] = sy;
+    result[2][2] = sz;
+    result[3][3] = 1.0f;
+    return result;
+}
+
+template <int n, int m> 
+Matrix<4, 4> Matrix<n, m>::rotateX(float angle) {
+    Matrix<4, 4> result = Matrix<4, 4>::identity();
+    float c = std::cos(angle);
+    float s = std::sin(angle);
+    result[1][1] = c;
+    result[1][2] = -s;
+    result[2][1] = s;
+    result[2][2] = c;
+    return result;
+}
+
+template <int n, int m> 
+Matrix<4, 4> Matrix<n, m>::rotateY(float angle) {
+    Matrix<4, 4> result = Matrix<4, 4>::identity();
+    float c = std::cos(angle);
+    float s = std::sin(angle);
+    result[0][0] = c;
+    result[0][2] = s;
+    result[2][0] = -s;
+    result[2][2] = c;
+    return result;
+}
+
+template <int n, int m> 
+Matrix<4, 4> Matrix<n, m>::rotateZ(float angle) {
+    Matrix<4, 4> result = Matrix<4, 4>::identity();
+    float c = std::cos(angle);
+    float s = std::sin(angle);
+    result[0][0] = c;
+    result[0][1] = -s;
+    result[1][0] = s;
+    result[1][1] = c;
+    return result;
+}
+
 #endif
