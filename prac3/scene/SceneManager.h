@@ -5,12 +5,21 @@
 #include "MeshNode.h"
 #include "../math/Matrix.h"
 #include <GLFW/glfw3.h>
+#include "../math/Vector.h"
 
 class SceneManager {
 private:
 	SceneNode* rootNode;
+	SceneNode* windmillBase;
+	SceneNode* rotorNode;
+	float rotorAngle;
+	Vector<3> cameraPos;
+	Vector<3> scenePos;
+	Vector<3> sceneRot; // x, y, z rotations
 	Matrix<4, 4> projectionMatrix;
 	Matrix<4, 4> viewMatrix;
+	bool isWireframeMode;
+	bool enterPressed;
 
 public:
 	SceneManager();

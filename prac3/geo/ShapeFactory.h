@@ -15,6 +15,9 @@ public:
     static ShapeData createCylinder(float radius, float height, int slices);
     static ShapeData createCone(float radius, float height, int slices);
     static ShapeData createTriangularPrism(float base, float height, float depth);
+    static ShapeData createSphere(float radius, int lats, int longs);
+    static ShapeData createOpenCylinder(float radius, float height, int slices);
+    static ShapeData createHexagonRim(float radius);
 };
 
 #endif

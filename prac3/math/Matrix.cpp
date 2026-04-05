@@ -56,7 +56,13 @@ template <int n, int m> Matrix<n, m>::Matrix() {
 }
 
 template <int n, int m> Matrix<n, m>::Matrix(float **list) { 
-  arr = list;
+  arr = new float *[n];
+  for (int f = 0; f < n; f++) {
+    arr[f] = new float[m];
+    for (int s = 0; s < m; s++) {
+      arr[f][s] = list[f][s];
+    }
+  }
 }
 
 template <int n, int m> Matrix<n, m>::Matrix(const Matrix<n, m> &other) {
@@ -200,8 +206,9 @@ Matrix<4, 4> Matrix<n, m>::scale(float sx, float sy, float sz) {
 template <int n, int m> 
 Matrix<4, 4> Matrix<n, m>::rotateX(float angle) {
     Matrix<4, 4> result = Matrix<4, 4>::identity();
-    float c = std::cos(angle);
-    float s = std::sin(angle);
+    float rad = angle * M_PI / 180.0f;
+    float c = std::cos(rad);
+    float s = std::sin(rad);
     result[1][1] = c;
     result[1][2] = -s;
     result[2][1] = s;
@@ -212,8 +219,9 @@ Matrix<4, 4> Matrix<n, m>::rotateX(float angle) {
 template <int n, int m> 
 Matrix<4, 4> Matrix<n, m>::rotateY(float angle) {
     Matrix<4, 4> result = Matrix<4, 4>::identity();
-    float c = std::cos(angle);
-    float s = std::sin(angle);
+    float rad = angle * M_PI / 180.0f;
+    float c = std::cos(rad);
+    float s = std::sin(rad);
     result[0][0] = c;
     result[0][2] = s;
     result[2][0] = -s;
@@ -224,12 +232,25 @@ Matrix<4, 4> Matrix<n, m>::rotateY(float angle) {
 template <int n, int m> 
 Matrix<4, 4> Matrix<n, m>::rotateZ(float angle) {
     Matrix<4, 4> result = Matrix<4, 4>::identity();
-    float c = std::cos(angle);
-    float s = std::sin(angle);
+    float rad = angle * M_PI / 180.0f;
+    float c = std::cos(rad);
+    float s = std::sin(rad);
     result[0][0] = c;
     result[0][1] = -s;
     result[1][0] = s;
     result[1][1] = c;
+    return result;
+}
+
+template <int n, int m>
+Matrix<4, 4> Matrix<n, m>::perspective(float fov, float aspect, float near, float far) {
+    Matrix<4, 4> result; // Zero-initialized
+    float h = 1.0f / std::tan(fov * M_PI / 360.0f);
+    result[0][0] = h / aspect;
+    result[1][1] = h;
+    result[2][2] = (far + near) / (near - far);
+    result[2][3] = (2.0f * far * near) / (near - far);
+    result[3][2] = -1.0f;
     return result;
 }
 

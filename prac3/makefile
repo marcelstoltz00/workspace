@@ -1,12 +1,12 @@
 #add all the files that you need to the files makefile variable below as a space seperated list
-files = Matrix.cpp Vector.cpp Square.cpp Triangle.cpp
+files = math/Matrix.cpp math/Vector.cpp geo/Square.cpp geo/Triangle.cpp geo/ShapeFactory.cpp scene/SceneManager.cpp scene/MeshNode.cpp
 
 # Homebrew paths for macOS
-CFLAGS = -I/opt/homebrew/include -I/usr/local/include
-LDFLAGS = -L/opt/homebrew/lib -L/usr/local/lib
+CFLAGS = -std=c++11 -I/opt/homebrew/include -I/usr/local/include -I/opt/homebrew/opt/glew/include -I/opt/homebrew/opt/glfw/include
+LDFLAGS = -L/opt/homebrew/lib -L/usr/local/lib -L/opt/homebrew/opt/glew/lib -L/opt/homebrew/opt/glfw/lib
 
 main: main.cpp
-	g++ -g $(CFLAGS) shader.cpp $(files) main.cpp $(LDFLAGS) -lglfw -lGLEW -framework OpenGL -o main
+	clang++ -g $(CFLAGS) -Imath -Igeo shader.cpp $(files) main.cpp $(LDFLAGS) -lglfw -lGLEW -framework OpenGL -o main
 
 clean:
 	rm -f *.o main

@@ -3,7 +3,9 @@
 
 #include <iostream>
 #include <cmath>
-#include <iomanip>
+#ifndef M_PI
+#define M_PI 3.14159265358979323846
+#endif
 
 template <int n>
 class Vector;
@@ -46,6 +48,7 @@ public:
     static Matrix<4, 4> rotateX(float angle);
     static Matrix<4, 4> rotateY(float angle);
     static Matrix<4, 4> rotateZ(float angle);
+    static Matrix<4, 4> perspective(float fov, float aspect, float near, float far);
     void print() const
     {
         for (int i = 0; i < n; i++)

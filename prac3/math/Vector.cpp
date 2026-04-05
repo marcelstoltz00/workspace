@@ -26,7 +26,10 @@ template <int n>
 
 template <int n>
 Vector<n>::Vector(float *list) { 
-    arr = list; 
+    arr = new float[n];
+    for (int i = 0; i < n; i++) {
+        arr[i] = list[i];
+    }
 }
 
 template <int n>

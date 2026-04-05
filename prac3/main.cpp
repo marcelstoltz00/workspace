@@ -77,9 +77,16 @@ int main()
     GLuint progID = LoadShaders("simple.vert", "simple.frag");
 
     SceneManager sceneManager;
-    sceneManager.buildScene(); // Uses ShapeFactory to create MeshNodes and attaches them to the root
+    sceneManager.buildScene(); 
 
     double lastTime = glfwGetTime();
+
+
+    glEnable(GL_DEPTH_TEST);
+    glDepthFunc(GL_LESS);
+    
+
+    glClearColor(0.5f, 0.8f, 0.95f, 1.0f);
 
     while (!glfwWindowShouldClose(window)) {
         double currentTime = glfwGetTime();
@@ -88,19 +95,19 @@ int main()
 
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-        // 1. Process Input (W,A,S,D rotations, translations, rotor speed)
+       
         sceneManager.processInput(window, deltaTime);
 
-        // 2. Update Scene Graph (Calculates all world matrices)
+     
         sceneManager.update();
 
-        // 3. Draw Scene Graph
+
         sceneManager.draw(progID);
 
         glfwSwapBuffers(window);
         glfwPollEvents();
     }
 
-    // Cleanup...
+
     return 0;
 }

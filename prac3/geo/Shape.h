@@ -1,7 +1,7 @@
 #ifndef SHAPE_H
 #define SHAPE_H
 
-#include "Matrix.h"
+#include "../math/Matrix.h"
 
 #include <iostream>
 
