@@ -240,3 +240,35 @@ ShapeData ShapeFactory::createHexagonRim(float radius) {
     }
     return data;
 }
+
+ShapeData ShapeFactory::createBox(float w, float h, float d) {
+    ShapeData data;
+    float hw = w / 2.0f;
+    float hh = h / 2.0f;
+    float hd = d / 2.0f;
+
+    // Define 8 corner points
+    float p[8][3] = {
+        {-hw, -hh, -hd}, {hw, -hh, -hd}, {hw, hh, -hd}, {-hw, hh, -hd},
+        {-hw, -hh,  hd}, {hw, -hh,  hd}, {hw, hh,  hd}, {-hw, hh,  hd}
+    };
+
+    // Helper to add a triangle
+    auto addTri = [&](int a, int b, int c) {
+        for(int i : {a, b, c}) {
+            data.vertices.push_back(p[i][0]);
+            data.vertices.push_back(p[i][1]);
+            data.vertices.push_back(p[i][2]);
+        }
+    };
+
+    // 6 faces
+    addTri(0, 1, 2); addTri(0, 2, 3); // Front
+    addTri(5, 4, 7); addTri(5, 7, 6); // Back
+    addTri(4, 0, 3); addTri(4, 3, 7); // Left
+    addTri(1, 5, 6); addTri(1, 6, 2); // Right
+    addTri(3, 2, 6); addTri(3, 6, 7); // Top
+    addTri(4, 5, 1); addTri(4, 1, 0); // Bottom
+
+    return data;
+}

@@ -18,6 +18,7 @@ public:
     static ShapeData createSphere(float radius, int lats, int longs);
     static ShapeData createOpenCylinder(float radius, float height, int slices);
     static ShapeData createHexagonRim(float radius);
+    static ShapeData createBox(float w, float h, float d);
 };
 
 #endif

@@ -205,12 +205,18 @@ void SceneManager::buildScene() {
     ShapeData hexMid = ShapeFactory::createCylinder(windmillMRadius, 0.12f, 6);
     ShapeData hexMidRim = ShapeFactory::createHexagonRim(windmillMRadius);
 
+    // New parent node to move the whole windmill unit
+    SceneNode* windmillNode = new SceneNode();
+    // Centered in world for now
+    windmillNode->setLocalTransform(Matrix<4,4>::translate(0.0f, 0.0f, 0.0f)); 
+    rootNode->addChild(windmillNode);
+
     // Part 1: Wide Base - 3 thick layers
     for (int i = 0; i < 3; i++) {
         MeshNode* layer = new MeshNode(hexBase, colWindmillRed);
         layer->setLocalTransform(Matrix<4,4>::translate(0.0f, baseLayerH/2.0f + i * baseLayerH, -0.35f * S) * 
                                  Matrix<4,4>::rotateX(90.0f) * Matrix<4,4>::scale(1.0f * S, 1.0f * S, baseLayerH/0.12f));
-        rootNode->addChild(layer);
+        windmillNode->addChild(layer);
         
         MeshNode* rT = new MeshNode(hexBaseRim, colWhite);
         rT->setPrimitiveType(GL_LINE_LOOP);
@@ -231,7 +237,7 @@ void SceneManager::buildScene() {
         MeshNode* layer = new MeshNode(hexMid, colWindmillRed);
         layer->setLocalTransform(Matrix<4,4>::translate(0.0f, midStartH + midLayerH/2.0f + i * midLayerH, -0.35f * S) * 
                                  Matrix<4,4>::rotateX(90.0f) * Matrix<4,4>::scale(taper * S, taper * S, midLayerH/0.12f));
-        rootNode->addChild(layer);
+        windmillNode->addChild(layer);
 
         // Rims (scaled with parent)
         MeshNode* rT = new MeshNode(hexMidRim, colWhite);
@@ -254,7 +260,7 @@ void SceneManager::buildScene() {
     MeshNode* wRoof = new MeshNode(roof, colWindmillRed);
     wRoof->setLocalTransform(Matrix<4,4>::translate(0.0f, topStartH + roofH/2.0f, -0.35f * S) * 
                              Matrix<4,4>::rotateX(-90.0f) * Matrix<4,4>::scale(1.0f * S, 1.0f * S, 1.0f));
-    rootNode->addChild(wRoof);
+    windmillNode->addChild(wRoof);
 
     // Rim for Roof Base
     MeshNode* rRim = new MeshNode(roofRim, colWhite);
@@ -262,60 +268,52 @@ void SceneManager::buildScene() {
     rRim->setLocalTransform(Matrix<4,4>::translate(0, 0, -roofH/2.0f - 0.001f));
     wRoof->addChild(rRim);
 
-    // 12. ROTATING BLADES (User Planning)
+    // 12. ROTATING BLADES (Balanced Distance)
     rotorAngle = 0.0f;
     rotorNode = new SceneNode();
-    // Position the rotor on the front of the windmill
-    float rotorZ = -0.35f * S - 0.30f;
-    float rotorY = 1.80f;
-    rotorNode->setLocalTransform(Matrix<4,4>::translate(0.0f, rotorY, rotorZ));
-    rootNode->addChild(rotorNode);
+    float rx = 0.00f; 
+    float ry = 4.50f; 
+    float rz = -0.50f; // Bridging the gap
+    rotorNode->setLocalTransform(Matrix<4,4>::translate(rx, ry, rz));
+    windmillNode->addChild(rotorNode);
 
-    // Center Hub (Solid Red)
-    ShapeData hubShape = ShapeFactory::createCylinder(0.10f, 0.10f, 16);
-    MeshNode* hub = new MeshNode(hubShape, colWindmillRed);
-    // Faces player (+Z is away, so rotate 0 or 180?)
-    hub->setLocalTransform(Matrix<4,4>::rotateX(0.0f)); 
-    rotorNode->addChild(hub);
+    // 12.1 STATIC AXLE (Synchronized)
+    // Connecting the wall (~-2.5 Z) to the rotor (-0.5 Z)
+    ShapeData axleS = ShapeFactory::createCylinder(0.06f, 2.0f, 16);
+    MeshNode* axle = new MeshNode(axleS, colWindmillRed);
+    axle->setLocalTransform(Matrix<4,4>::translate(0.0f, 4.50f, -1.50f));
+    windmillNode->addChild(axle);
 
-    // 4 Arms and Blades
-    ShapeData armShape = ShapeFactory::createCylinder(0.03f, 1.0f, 8); // Long thin arm
-    ShapeData bladeShape = ShapeFactory::createCylinder(0.15f, 0.8f, 4); // Square-ish blades
-    ShapeData bladeRim = ShapeFactory::createHexagonRim(0.15f); // Use a rim for blades too
+    // Hub
+    ShapeData hS = ShapeFactory::createCylinder(0.12f, 0.10f, 16);
+    MeshNode* hN = new MeshNode(hS, colWindmillRed);
+    rotorNode->addChild(hN);
+
+    // Box Geometry
+    ShapeData armB = ShapeFactory::createBox(0.12f, 0.30f, 0.06f); 
+    ShapeData bladeB = ShapeFactory::createBox(0.40f, 4.0f, 0.08f); 
 
     for (int i = 0; i < 4; i++) {
         float angle = i * 90.0f;
-        SceneNode* armRoot = new SceneNode();
-        armRoot->setLocalTransform(Matrix<4,4>::rotateZ(angle));
-        rotorNode->addChild(armRoot);
+        SceneNode* p = new SceneNode();
+        p->setLocalTransform(Matrix<4,4>::rotateZ(angle));
+        rotorNode->addChild(p);
 
-        // The Arm (Rectangle connecting center to blade)
-        MeshNode* arm = new MeshNode(armShape, colWindmillRed);
-        // Translate arm so it starts at the hub
-        arm->setLocalTransform(Matrix<4,4>::translate(0.0f, 0.5f, 0.0f) * Matrix<4,4>::scale(1.0f, 1.5f, 1.0f));
-        armRoot->addChild(arm);
+        // Mounting Plate / Arm 
+        MeshNode* flatA = new MeshNode(armB, colWindmillRed);
+        flatA->setLocalTransform(Matrix<4,4>::translate(0.0f, 0.27f, 0.0f));
+        p->addChild(flatA);
 
-        // Each blade = 2 white rectangles side-by-side
-        // Position at the end of the arm
-        float bladeYAt = 1.2f;
-        for (float offsetX : {-0.08f, 0.08f}) {
-            MeshNode* blade = new MeshNode(bladeShape, colWhite);
-            blade->setLocalTransform(Matrix<4,4>::translate(offsetX, bladeYAt, 0.01f) * 
-                                     Matrix<4,4>::scale(0.5f, 1.0f, 0.1f));
-            armRoot->addChild(blade);
-            
-            // Rim for each sub-blade piece
-            MeshNode* br = new MeshNode(bladeRim, colWhite); // Subtle rim
-            br->setPrimitiveType(GL_LINE_LOOP);
-            br->setLocalTransform(Matrix<4,4>::translate(0, 0, 0.05f));
-            blade->addChild(br);
-        }
+        // Long Aerodynamic Blade 
+        MeshNode* b = new MeshNode(bladeB, colWhite);
+        b->setLocalTransform(Matrix<4,4>::translate(0.0f, 2.42f, 0.01f) * Matrix<4,4>::rotateY(15.0f));
+        p->addChild(b);
     }
 
     // Camera and Scene setups
     cameraPos = Vector<3>({0.0f, -10.0f, -20.0f}); 
     scenePos = Vector<3>({0.0f, 0.0f, 0.0f});
-    sceneRot = Vector<3>({35.0f, 0.0f, 0.0f}); // Initial X-tilt
+    sceneRot = Vector<3>({35.0f, 0.0f, 0.0f}); 
 
     // Default projection
     projectionMatrix = Matrix<4,4>::perspective(45.0f, 1.0f, 0.1f, 100.0f);
@@ -337,12 +335,12 @@ void SceneManager::processInput(GLFWwindow* window, double deltaTime) {
     if (glfwGetKey(window, GLFW_KEY_E) == GLFW_PRESS) sceneRot[2] -= rotSpeed * deltaTime;
 
     // 4.5.2 Translation (I/K/L/J/O/U)
-    if (glfwGetKey(window, GLFW_KEY_I) == GLFW_PRESS) scenePos[1] += speed * deltaTime; // Y up
-    if (glfwGetKey(window, GLFW_KEY_K) == GLFW_PRESS) scenePos[1] -= speed * deltaTime; // Y down
-    if (glfwGetKey(window, GLFW_KEY_L) == GLFW_PRESS) scenePos[0] += speed * deltaTime; // X right
-    if (glfwGetKey(window, GLFW_KEY_J) == GLFW_PRESS) scenePos[0] -= speed * deltaTime; // X left
-    if (glfwGetKey(window, GLFW_KEY_O) == GLFW_PRESS) scenePos[2] += speed * deltaTime; // Z inc
-    if (glfwGetKey(window, GLFW_KEY_U) == GLFW_PRESS) scenePos[2] -= speed * deltaTime; // Z dec
+    if (glfwGetKey(window, GLFW_KEY_I) == GLFW_PRESS) scenePos[1] += speed * deltaTime; 
+    if (glfwGetKey(window, GLFW_KEY_K) == GLFW_PRESS) scenePos[1] -= speed * deltaTime; 
+    if (glfwGetKey(window, GLFW_KEY_L) == GLFW_PRESS) scenePos[0] += speed * deltaTime; 
+    if (glfwGetKey(window, GLFW_KEY_J) == GLFW_PRESS) scenePos[0] -= speed * deltaTime; 
+    if (glfwGetKey(window, GLFW_KEY_O) == GLFW_PRESS) scenePos[2] += speed * deltaTime; 
+    if (glfwGetKey(window, GLFW_KEY_U) == GLFW_PRESS) scenePos[2] -= speed * deltaTime; 
 
     // Wireframe toggle (ENTER)
     bool isEnterDown = glfwGetKey(window, GLFW_KEY_ENTER) == GLFW_PRESS;
@@ -354,12 +352,12 @@ void SceneManager::processInput(GLFWwindow* window, double deltaTime) {
 
 void SceneManager::update() {
     // 1. Animate rotor
-    rotorAngle += 45.0f * (1.0f/60.0f); // Fixed dt for smooth visual
+    rotorAngle += 45.0f * (1.0f/60.0f); 
     if (rotorNode) {
-        // Shared translation + local rotation
-        float rZ = -0.35f * 6.0f - 0.30f;
-        float rY = 1.80f;
-        rotorNode->setLocalTransform(Matrix<4,4>::translate(0.0f, rY, rZ) * Matrix<4,4>::rotateZ(rotorAngle));
+        float rX = 0.00f;
+        float rY = 4.50f;
+        float rZ = -0.50f;
+        rotorNode->setLocalTransform(Matrix<4,4>::translate(rX, rY, rZ) * Matrix<4,4>::rotateZ(rotorAngle));
     }
 
     // 1. Static Camera View
