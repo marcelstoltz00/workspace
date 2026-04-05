@@ -13,6 +13,7 @@ private:
 	SceneNode* windmillBase;
 	SceneNode* rotorNode;
 	float rotorAngle;
+	float rotorSpeed;
 	Vector<3> cameraPos;
 	Vector<3> scenePos;
 	Vector<3> sceneRot; // x, y, z rotations

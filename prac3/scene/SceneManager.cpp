@@ -1,7 +1,7 @@
 #include "SceneManager.h"
 #include <iostream>
 
-SceneManager::SceneManager() : rootNode(new SceneNode()), isWireframeMode(false), enterPressed(false), rotorAngle(0.0f) {
+SceneManager::SceneManager() : rootNode(new SceneNode()), isWireframeMode(false), enterPressed(false), rotorAngle(0.0f), rotorSpeed(0.0f) {
     cameraPos = Vector<3>({0.0f, -10.0f, -20.0f}); 
     scenePos = Vector<3>({0.0f, 0.0f, 0.0f});
     sceneRot = Vector<3>({35.0f, 0.0f, 0.0f});
@@ -23,6 +23,32 @@ void SceneManager::buildScene() {
     Vector<3> colBorder({0.28f, 0.17f, 0.09f});
     Vector<3> colGrass({0.20f, 0.62f, 0.26f});
     Vector<3> colWall({0.28f, 0.17f, 0.09f});
+    Vector<3> colMetal({0.75f, 0.75f, 0.75f}); // Metallic grey
+    Vector<3> colLeaf({0.0f, 0.40f, 0.0f});    // Plant green
+
+    // 13. DECOR: 2 Upright Plants
+    ShapeData coneS = ShapeFactory::createCone(0.12f, 0.45f, 32); 
+    ShapeData potS = ShapeFactory::createCylinder(0.10f, 0.15f, 32);
+    for (int i = 0; i < 2; i++) {
+        SceneNode* plantNode = new SceneNode();
+        plantNode->setLocalTransform(Matrix<4,4>::translate(-1.0f - i, 0.0f, -4.0f));
+        rootNode->addChild(plantNode);
+        
+        MeshNode* plantPot = new MeshNode(potS, colBorder);
+        // Correcting orientation
+        plantPot->setLocalTransform(Matrix<4,4>::translate(0, 0.075f, 0) * Matrix<4,4>::rotateX(90.0f));
+        plantNode->addChild(plantPot);
+        
+        MeshNode* plantLeaf = new MeshNode(coneS, colLeaf);
+        plantLeaf->setLocalTransform(Matrix<4,4>::translate(0, 0.35f, 0) * Matrix<4,4>::rotateX(90.0f));
+        plantNode->addChild(plantLeaf);
+    }
+
+    // 14. TRIANGULAR PRISM (Satisfies criteria)
+    ShapeData rampS = ShapeFactory::createTriangularPrism(0.8f, 0.4f, 0.6f);
+    MeshNode* tRamp = new MeshNode(rampS, colConcrete);
+    tRamp->setLocalTransform(Matrix<4,4>::translate(2.5f, 0.20f, -3.0f));
+    rootNode->addChild(tRamp);
 
     // 1. Concrete Floor (Base)
     MeshNode* concrete = new MeshNode(cuboid, colConcrete);
@@ -100,7 +126,7 @@ void SceneManager::buildScene() {
     grassT_Back->setLocalTransform(Matrix<4,4>::translate(hX, -0.05f, backSlotStart + backSlotDepth/2.0f) * Matrix<4,4>::scale(hSize, 0.1f, backSlotDepth));
     rootNode->addChild(grassT_Back);
 
-    // 4. River (Visible in the central gap at Z=0)
+    // 4. River (Distinctive Blue)
     Vector<3> colRiver({0.15f, 0.42f, 0.86f});
     MeshNode* river = new MeshNode(cuboid, colRiver);
     river->setLocalTransform(Matrix<4,4>::translate(0.0f, -0.10f, 0.0f) * Matrix<4,4>::scale(gx, 0.1f, 0.20f * S));
@@ -120,13 +146,13 @@ void SceneManager::buildScene() {
     bridge3->setLocalTransform(Matrix<4,4>::translate(0.80f * S, 0.06f, 0.0f) * Matrix<4,4>::scale(0.05f * S, 0.12f, 0.30f * S));
     rootNode->addChild(bridge3);
 
-    // 6. Starting Mat (at Negative Z)
+    // 6. Starting Mat (Restored Maroon at original position)
     Vector<3> colStart({0.50f, 0.12f, 0.18f});
     MeshNode* startMat = new MeshNode(cuboid, colStart);
     startMat->setLocalTransform(Matrix<4,4>::translate(-0.72f * S, -0.045f, -0.72f * S) * Matrix<4,4>::scale(0.22f * S, 0.11f, 0.16f * S));
     rootNode->addChild(startMat);
 
-    // 7. Golf Ball and Hole
+    // 6. Golf Ball and Hole
     ShapeData sphere = ShapeFactory::createSphere(1.0f, 20, 20);
     ShapeData openCyl = ShapeFactory::createOpenCylinder(1.0f, 1.0f, 64);
     
@@ -146,7 +172,6 @@ void SceneManager::buildScene() {
     // 8. Decorations (Plants outside the wall)
     ShapeData cone = ShapeFactory::createCone(1.0f, 2.0f, 32);
     ShapeData trunkCyl = ShapeFactory::createCylinder(1.0f, 1.0f, 16);
-    Vector<3> colLeaf({0.1f, 0.5f, 0.1f});
     Vector<3> colTrunk({0.4f, 0.2f, 0.1f});
 
     // Plant 1 (Outside Left Wall)
@@ -200,9 +225,9 @@ void SceneManager::buildScene() {
     float baseLayerH = 0.35f; // Thicker base layers
     float midLayerH = 0.35f;  // Thicker mid layers
     
-    ShapeData hexBase = ShapeFactory::createCylinder(windmillHRadius, 0.12f, 6); // Original shape height 0.12
+    ShapeData hexBase = ShapeFactory::createCylinder(windmillHRadius, 0.12f, 6); // Hexagonal Base
     ShapeData hexBaseRim = ShapeFactory::createHexagonRim(windmillHRadius);
-    ShapeData hexMid = ShapeFactory::createCylinder(windmillMRadius, 0.12f, 6);
+    ShapeData hexMid = ShapeFactory::createCylinder(windmillMRadius, 0.12f, 6); // Hexagonal Mid
     ShapeData hexMidRim = ShapeFactory::createHexagonRim(windmillMRadius);
 
     // New parent node to move the whole windmill unit
@@ -211,25 +236,37 @@ void SceneManager::buildScene() {
     windmillNode->setLocalTransform(Matrix<4,4>::translate(0.0f, 0.0f, 0.0f)); 
     rootNode->addChild(windmillNode);
 
-    // Part 1: Wide Base - 3 thick layers
-    for (int i = 0; i < 3; i++) {
-        MeshNode* layer = new MeshNode(hexBase, colWindmillRed);
-        layer->setLocalTransform(Matrix<4,4>::translate(0.0f, baseLayerH/2.0f + i * baseLayerH, -0.35f * S) * 
-                                 Matrix<4,4>::rotateX(90.0f) * Matrix<4,4>::scale(1.0f * S, 1.0f * S, baseLayerH/0.12f));
-        windmillNode->addChild(layer);
-        
-        MeshNode* rT = new MeshNode(hexBaseRim, colWhite);
-        rT->setPrimitiveType(GL_LINE_LOOP);
-        rT->setLocalTransform(Matrix<4,4>::translate(0, 0, (0.06f * (baseLayerH/0.12f)) + 0.001f));
-        layer->addChild(rT);
-        MeshNode* rB = new MeshNode(hexBaseRim, colWhite);
-        rB->setPrimitiveType(GL_LINE_LOOP);
-        rB->setLocalTransform(Matrix<4,4>::translate(0, 0, -(0.06f * (baseLayerH/0.12f)) - 0.001f));
-        layer->addChild(rB);
+    // 11.1 Archway & Hexagonal Base (Gap for Golf Ball)
+    ShapeData pillarS = ShapeFactory::createBox(0.40f, 1.05f, 1.50f); 
+    ShapeData hexBaseS = ShapeFactory::createCylinder(windmillHRadius, 0.35f, 6);
+    ShapeData hexBaseRimS = ShapeFactory::createHexagonRim(windmillHRadius);
+
+    // Foundation: Two Pillars forming the tunnel
+    MeshNode* pL = new MeshNode(pillarS, colWindmillRed);
+    pL->setLocalTransform(Matrix<4,4>::translate(-0.55f, 0.525f, -0.35f * S));
+    windmillNode->addChild(pL);
+    
+    MeshNode* pR = new MeshNode(pillarS, colWindmillRed);
+    pR->setLocalTransform(Matrix<4,4>::translate(0.55f, 0.525f, -0.35f * S));
+    windmillNode->addChild(pR);
+
+    // The "Two Hexagons" on top of the tunnel
+    for (int i = 0; i < 2; i++) {
+        float hY = 1.05f + (i * 0.35f) + 0.175f;
+        MeshNode* hLayer = new MeshNode(hexBaseS, colWindmillRed);
+        hLayer->setLocalTransform(Matrix<4,4>::translate(0.0f, hY, -0.35f * S) * 
+                                  Matrix<4,4>::rotateX(-90.0f) * Matrix<4,4>::scale(1.0f * S, 1.0f * S, 1.0f));
+        windmillNode->addChild(hLayer);
+
+        // White Rims for these hexagons
+        MeshNode* r = new MeshNode(hexBaseRimS, colWhite);
+        r->setPrimitiveType(GL_LINE_LOOP);
+        r->setLocalTransform(Matrix<4,4>::translate(0, 0, 0.175f + 0.001f));
+        hLayer->addChild(r);
     }
 
-    // Part 2: Tapered Middle - 10 thick layers
-    float midStartH = 3 * baseLayerH;
+    // Part 2: Tapered Middle (Starting on top of the hex base)
+    float midStartH = 1.05f + (2 * 0.35f); 
     for (int i = 0; i < 10; i++) {
         float taper = 1.0f - (i * 0.05f);
         if (taper < 0.2f) taper = 0.2f;
@@ -251,14 +288,14 @@ void SceneManager::buildScene() {
     }
 
     // Part 3: Top Part - Pyramid Roof (Steeper Peak)
-    float topStartH = (3 * baseLayerH) + (10 * midLayerH);
+    float roofElev = 1.05f + (2 * 0.35f) + (10 * 0.35f); // Pillars + 2 Hex + 10 Mid
     float roofH = 1.0f;
     float roofR = 0.15f;
-    ShapeData roof = ShapeFactory::createCone(roofR, roofH, 6);
+    ShapeData roof = ShapeFactory::createCone(roofR, roofH, 6); // Hexagonal Roof
     ShapeData roofRim = ShapeFactory::createHexagonRim(roofR);
 
     MeshNode* wRoof = new MeshNode(roof, colWindmillRed);
-    wRoof->setLocalTransform(Matrix<4,4>::translate(0.0f, topStartH + roofH/2.0f, -0.35f * S) * 
+    wRoof->setLocalTransform(Matrix<4,4>::translate(0.0f, roofElev + roofH/2.0f, -0.35f * S) * 
                              Matrix<4,4>::rotateX(-90.0f) * Matrix<4,4>::scale(1.0f * S, 1.0f * S, 1.0f));
     windmillNode->addChild(wRoof);
 
@@ -268,20 +305,20 @@ void SceneManager::buildScene() {
     rRim->setLocalTransform(Matrix<4,4>::translate(0, 0, -roofH/2.0f - 0.001f));
     wRoof->addChild(rRim);
 
-    // 12. ROTATING BLADES (Balanced Distance)
+    // 12. ROTATING BLADES (Shifted "A lot higher")
     rotorAngle = 0.0f;
     rotorNode = new SceneNode();
     float rx = 0.00f; 
-    float ry = 4.50f; 
+    float ry = 5.20f; // High position
     float rz = -0.50f; // Bridging the gap
     rotorNode->setLocalTransform(Matrix<4,4>::translate(rx, ry, rz));
     windmillNode->addChild(rotorNode);
 
-    // 12.1 STATIC AXLE (Synchronized)
-    // Connecting the wall (~-2.5 Z) to the rotor (-0.5 Z)
-    ShapeData axleS = ShapeFactory::createCylinder(0.06f, 2.0f, 16);
-    MeshNode* axle = new MeshNode(axleS, colWindmillRed);
-    axle->setLocalTransform(Matrix<4,4>::translate(0.0f, 4.50f, -1.50f));
+    // 12.1 STATIC AXLE (Metallic Grey)
+    // Synchronized with High Rotor Hub
+    ShapeData axleS = ShapeFactory::createCylinder(0.06f, 2.0f, 32); 
+    MeshNode* axle = new MeshNode(axleS, colMetal);
+    axle->setLocalTransform(Matrix<4,4>::translate(0.0f, 5.20f, -1.50f));
     windmillNode->addChild(axle);
 
     // Hub
@@ -289,9 +326,9 @@ void SceneManager::buildScene() {
     MeshNode* hN = new MeshNode(hS, colWindmillRed);
     rotorNode->addChild(hN);
 
-    // Box Geometry
-    ShapeData armB = ShapeFactory::createBox(0.12f, 0.30f, 0.06f); 
-    ShapeData bladeB = ShapeFactory::createBox(0.40f, 4.0f, 0.08f); 
+    // Box Geometry: Optimized for clean mounting and reach
+    ShapeData armB = ShapeFactory::createBox(0.12f, 0.60f, 0.06f); // Lengthened arm
+    ShapeData bladeB = ShapeFactory::createBox(0.40f, 4.60f, 0.08f); // Resized blade
 
     for (int i = 0; i < 4; i++) {
         float angle = i * 90.0f;
@@ -301,12 +338,12 @@ void SceneManager::buildScene() {
 
         // Mounting Plate / Arm 
         MeshNode* flatA = new MeshNode(armB, colWindmillRed);
-        flatA->setLocalTransform(Matrix<4,4>::translate(0.0f, 0.27f, 0.0f));
+        flatA->setLocalTransform(Matrix<4,4>::translate(0.0f, 0.42f, 0.01f)); // Shifted to hub edge
         p->addChild(flatA);
 
-        // Long Aerodynamic Blade 
+        // Long Aerodynamic Blade (Cleanly mounted)
         MeshNode* b = new MeshNode(bladeB, colWhite);
-        b->setLocalTransform(Matrix<4,4>::translate(0.0f, 2.42f, 0.01f) * Matrix<4,4>::rotateY(15.0f));
+        b->setLocalTransform(Matrix<4,4>::translate(0.0f, 2.80f, 0.02f) * Matrix<4,4>::rotateY(15.0f));
         p->addChild(b);
     }
 
@@ -348,14 +385,24 @@ void SceneManager::processInput(GLFWwindow* window, double deltaTime) {
         isWireframeMode = !isWireframeMode;
     }
     enterPressed = isEnterDown;
+
+    // Rotor Speed (+ and -)
+    // Handle both = (for plus) and numpad plus
+    if (glfwGetKey(window, GLFW_KEY_EQUAL) == GLFW_PRESS || glfwGetKey(window, GLFW_KEY_KP_ADD) == GLFW_PRESS) {
+        rotorSpeed += 1.5f * deltaTime;
+    }
+    if (glfwGetKey(window, GLFW_KEY_MINUS) == GLFW_PRESS || glfwGetKey(window, GLFW_KEY_KP_SUBTRACT) == GLFW_PRESS) {
+        rotorSpeed -= 1.5f * deltaTime;
+        if (rotorSpeed < 0.0f) rotorSpeed = 0.0f; // Don't rotate backwards
+    }
 }
 
 void SceneManager::update() {
-    // 1. Animate rotor
-    rotorAngle += 45.0f * (1.0f/60.0f); 
+    // 1. Animate rotor based on user-controlled speed
+    rotorAngle += rotorSpeed; 
     if (rotorNode) {
         float rX = 0.00f;
-        float rY = 4.50f;
+        float rY = 5.20f; // Synchronized with High Hub
         float rZ = -0.50f;
         rotorNode->setLocalTransform(Matrix<4,4>::translate(rX, rY, rZ) * Matrix<4,4>::rotateZ(rotorAngle));
     }
@@ -374,6 +421,10 @@ void SceneManager::update() {
 }
 
 void SceneManager::draw(unsigned int shaderProgram) {
+    // Set distinctive background (Sky Blue)
+    glClearColor(0.53f, 0.81f, 0.92f, 1.0f);
+    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+
     glUseProgram(shaderProgram);
     
     // Set projection matrix
