@@ -7,11 +7,11 @@
 template<int n, int m>
 class Matrix;
 
-template<int n>// size of the vector
+template<int n>
 class Vector
 {
 private:   
-    float *arr; // array containing the elements in the vector
+    float *arr; 
 
 public:
     Vector();

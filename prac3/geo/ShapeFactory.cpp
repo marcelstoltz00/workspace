@@ -26,31 +26,22 @@ ShapeData ShapeFactory::createCuboid(float width, float height, float depth) {
     Square<3> back(Vector<3>(cBack), height, width);
     float* bPts = back.getPoints();
     
-    // Pts layout: tl (0-2), tr (3-5), br (6-8), bl (9-11)
     
-    // Front tri 1: tl, bl, br
     addTri(data, fPts, fPts+9, fPts+6);
-    // Front tri 2: tl, br, tr
     addTri(data, fPts, fPts+6, fPts+3);
     
-    // Back tri 1: tr, br, bl (reversed winding for back face)
     addTri(data, bPts+3, bPts+6, bPts+9);
-    // Back tri 2: tr, bl, tl
     addTri(data, bPts+3, bPts+9, bPts);
     
-    // Left face (front-tl, back-tl, back-bl, front-bl)
     addTri(data, fPts, bPts, bPts+9);
     addTri(data, fPts, bPts+9, fPts+9);
     
-    // Right face (back-tr, front-tr, front-br, back-br)
     addTri(data, bPts+3, fPts+3, fPts+6);
     addTri(data, bPts+3, fPts+6, bPts+6);
     
-    // Top face (back-tl, back-tr, front-tr, front-tl)
     addTri(data, bPts, bPts+3, fPts+3);
     addTri(data, bPts, fPts+3, fPts);
     
-    // Bottom face (front-bl, front-br, back-br, back-bl)
     addTri(data, fPts+9, fPts+6, bPts+6);
     addTri(data, fPts+9, bPts+6, bPts+9);
     
@@ -79,13 +70,10 @@ ShapeData ShapeFactory::createCylinder(float radius, float height, int slices) {
         float* b1 = bPts + i * 3;
         float* b2 = bPts + next * 3;
         
-        // Top fan
         addTri(data, cTop, t1, t2);
         
-        // Bottom fan (reversed winding)
         addTri(data, cBot, b2, b1);
         
-        // Side quads as two triangles
         addTri(data, t1, b1, b2);
         addTri(data, t1, b2, t2);
     }
@@ -109,10 +97,8 @@ ShapeData ShapeFactory::createCone(float radius, float height, int slices) {
         float* b1 = bPts + i * 3;
         float* b2 = bPts + next * 3;
         
-        // Bottom fan
         addTri(data, cBot, b2, b1);
         
-        // Side triangle to top point
         addTri(data, b1, b2, cTop);
     }
     
@@ -247,13 +233,11 @@ ShapeData ShapeFactory::createBox(float w, float h, float d) {
     float hh = h / 2.0f;
     float hd = d / 2.0f;
 
-    // Define 8 corner points
     float p[8][3] = {
         {-hw, -hh, -hd}, {hw, -hh, -hd}, {hw, hh, -hd}, {-hw, hh, -hd},
         {-hw, -hh,  hd}, {hw, -hh,  hd}, {hw, hh,  hd}, {-hw, hh,  hd}
     };
 
-    // Helper to add a triangle
     auto addTri = [&](int a, int b, int c) {
         for(int i : {a, b, c}) {
             data.vertices.push_back(p[i][0]);
@@ -262,7 +246,6 @@ ShapeData ShapeFactory::createBox(float w, float h, float d) {
         }
     };
 
-    // 6 faces
     addTri(0, 1, 2); addTri(0, 2, 3); // Front
     addTri(5, 4, 7); addTri(5, 7, 6); // Back
     addTri(4, 0, 3); addTri(4, 3, 7); // Left

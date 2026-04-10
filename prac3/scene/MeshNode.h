@@ -25,18 +25,6 @@ public:
     void setOutline(const Vector<3>& color) { outlineColor = color; hasOutline = true; }
 
     void draw(unsigned int shaderProgram, bool isWireframe) override;
-    //NB
-// / Inside MeshNode::draw()
-// float flatMatrix[16];
-// int k = 0;
-// // Note: OpenGL expects Column-Major. If your matrix multiplication 
-// // is Row-Major, swap the loops (j then i) to transpose it for OpenGL.
-// for (int j = 0; j < 4; j++) {     // Columns
-//     for (int i = 0; i < 4; i++) { // Rows
-//         flatMatrix[k++] = worldTransform[i][j]; 
-//     }
-// }
-// glUniformMatrix4fv(matrixLocation, 1, GL_FALSE, flatMatrix);
     
 };
 

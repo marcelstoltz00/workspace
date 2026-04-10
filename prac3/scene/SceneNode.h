@@ -28,7 +28,6 @@ public:
         localTransform = transform;
     }
 
-    // This is where the magic happens. Your operator* is used here!
     virtual void update(const Matrix<4, 4>& parentWorldTransform) {
         worldTransform = parentWorldTransform * localTransform; 
         

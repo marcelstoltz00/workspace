@@ -5,13 +5,11 @@
 
 struct ShapeData {
     std::vector<float> vertices; 
-    // You can add indices here if you decide to use glDrawElements
 };
 
 class ShapeFactory {
 public:
     static ShapeData createCuboid(float width, float height, float depth);
-    // Slices must be >= 8 according to spec
     static ShapeData createCylinder(float radius, float height, int slices);
     static ShapeData createCone(float radius, float height, int slices);
     static ShapeData createTriangularPrism(float base, float height, float depth);
