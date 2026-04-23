@@ -1,18 +1,95 @@
 
-7
-
-Automatic Zoom
-Department of Computer Science
-Faculty of Engineering, Built Environment & IT
-University of Pretoria
-COS344 - Computer GraphicsCopyright ©2026 by FJ Redelinghuys. All rights reserved.
-Practical 4 Specification: Translucency, Textures
-and Light
-Release Date: 16-03-2026 at 06:00
-Start By Date: 14-04-2026
-Due Date: 11-05-2026 at 10:00
-Total Marks: 80
-1
+3
+2 Overview
+For this practical, you will need to render a semi-translucent 3D glass golf ball resting on a flat plane.
+Inside the golf ball, there is a light which shines through the glass and onto the plane below. The
+number of vertices that the golf ball and the plane need to be adjustable, such that the effect of the
+number of vertices on the overall quality of the render can be observed.
+3 Your Task:
+For this practical, you will need to render a scene similar to the sketch depicted in Figures 1 and 2:
+Figure 1: Side depiction of the required render
+Figure 2: Top-down depiction of the required render
+In Figures 1 and 2, the white box represents the flat plane (floor) that the golf ball will rest on,
+and the grey circle/sphere represents the golf ball. The yellow dot represents the initial position of
+the light that is inside the golf ball, and the orange lines/circle represent the light that is shining
+onto the floor. Remember, although Figures 1 and 2 are 2D, your render needs to be a single 3D
+scene.
+In the sections below, the different requirements are laid out.
+3.1 Shape requirements
+Your rendering should contain the following shapes:
+4
+• A sphere whose number of vertices can be increased and decreased during runtime.
+– Assign two keys on your keyboard (of your choosing) to control the number of vertices
+assigned to the sphere.
+• A flat plane whose number of vertices can be increased and decreased during runtime.
+– Assign two keys on your keyboard (of your choosing) to control the number of vertices
+assigned to the floor.
+– Hint: This may require you to create a series of smaller planes that are connected to form
+a bigger flat plane
+3.2 Texture requirements
+To make the golf ball appear more realistic, texture mapping needs to be applied. You will be
+required to create your own texture maps for this practical. The downloading or use of a pre-existing
+texture map will result in forfeiting all marks for the texture requirement. The following two texture
+maps are required:
+• A colour texture map that will shade the golf ball such that it is the correct shaded regions
+(dimples).
+• A displacement texture map that will be able to morph the surface of the golf ball such that
+the surface has accurate golf ball dimples.
+• An alpha texture map that will make the dimples transparent while the normal surface is
+non-transparent.
+The different texture maps should be enabled and disabled using the following buttons:
+• The B Key should be used to toggle the colour texture map on and off. When the colour texture
+map is disabled, the sphere should be a uniform translucent colour. When the colour texture
+map is enabled, the sphere should have dimples that is shaded a bit darker than the rest of the
+golf ball.
+• The N Key should be used to toggle the displacement texture map on and off. When the
+displacement texture map is disabled, the surface of the golf ball should be smooth, but when
+the displacement texture map is enabled, the surface should have visible dimples (in other
+words, should not be smooth). Note that the actual surface should be changed. The use of
+bump texture mapping is not allowed.
+• The M Key should be used to toggle the alpha texture map on and off. When disabled, the entire
+golf ball should be semi-transparent according to an alpha value, which is changed with the +
+and - keys. When the alpha texture map is enabled, only the dimples should be transparent,
+according to the same alpha value previously mentioned, and the rest of the golf ball should
+be fully opaque.
+The colour of the golf ball can change (discussed in the following section) and this should be
+taken into account when applying the texture mappings as discussed above.
+5
+3.3 Colour requirements
+You will need to comply with the following colour requirements:
+• Floor
+– Assign two keys on your keyboard (of your choosing) to control the colour of the floor.
+– Using these keys, you will need to be able to cycle through the following colours:
+∗ Red
+∗ Green
+∗ Blue
+∗ White
+∗ Black
+∗ 5 other distinct colours of your choosing.
+• Glass Golf Ball
+– Assign two different keys on your keyboard (of your choosing) to control the colour of the
+glass golf ball.
+– Using these keys, you will need to be able to cycle through the following colours:
+∗ Red
+∗ Green
+∗ Blue
+∗ White
+∗ Black
+∗ 5 other distinct colours of your choosing.
+– Assign two further keys (the + and - keys) to control the alpha value of the glass golf
+ball.
+– Hint: Make use of RGBA and assign the colour buffer to take in RGBA colours1 instead
+of the standard RGB2 colours.
+• Light
+– Assign two different keys on your keyboard (of your choosing) to control the colour of the
+light.
+– Using these keys, you will need to be able to cycle through the following colours:
+∗ Red
+∗ Green
+∗ Blue
+∗ White
+1A vec4 value.2A vec3 value.
+6
 ∗ 5 other distinct colours of your choosing.
 – Note that the light and glass colour should also affect the floor’s colour. In other words,
 if the light is yellow, the glass is green, and the floor is purple, the resulting colour of the
@@ -68,43 +145,3 @@ You will need to create three texture maps as described earlier. Note, you may n
 a texture map; you will need to create your own. For each texture map that you correctly created,
 you will receive 4 marks. During the demo, you will need to explain how you created the texture
 map. Remember to include the texture maps in your submission.
-4 Marking rubric
-The following rubric will be used to mark your submitted assignment. Note you will be demoing the
-practical during the practical sessions on your own computer or a lab computer. Please see Table 1
-for the rubric. Note: 1 mark will be subtracted for each transformation if the render is moved back
-to the centre before a new transformation is applied.
-5 Bonus marks
-There are 10 bonus marks available. Things that can be done for bonus marks are:
-8
-• To sort your glass faces, use the Binary Search Tree Partitioning algorithm (5 marks).
-• Add 5 different types of material finishes to the golf ball using another texture map (1 mark
-for each material finish).
-• Adding a second, which is not an ambient light (2 marks).
-• Adding edges (with glLines) to the glass such that each face can be easily distinguished (2
-marks).
-• Allow the colour of the floor to change as the floor moves behind the coloured golf ball (2
-marks).
-• Allowing the light to also affect the glass causes a spectral lighting effect on the glass (5 marks).
-• Adding stained glass regions to the glass. For you to obtain your marks, you will need to add
-ray tracing so that the light that intersects the different regions affects the light’s projection
-on the floor. For each new region you correctly add, you will get 2 marks.
-• Allow the light to affect the golf ball’s perception (2 marks).
-6 Implementation Details
-• You need to use OpenGL version 3.3 for this practical.
-• You may not use any of the build-in mathematical libraries within the glm package. This
-included matrix arithmetic. Hint: You may use your practical 1 in this practical.
-• You may not use any of the built-in OpenGL functions to generate the shapes for you. You
-need to create each shape from first principles.
-• You may not use any of the built-in OpenGL functions to perform the transformations of the
-shapes. You need to transform each shape from first principles either explicitly or by using the
-matrix arithmetic techniques discussed in class.
-• You may only use the following C++ and OpenGL libraries:
-– stdio.h
-– stdlib.h
-– iostream
-– iomanip
-– cmath
-– sstream
-– GL/glew.h
-– GLFW/glfw3.h
-9

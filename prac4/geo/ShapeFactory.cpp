@@ -50,6 +50,36 @@ ShapeData ShapeFactory::createCuboid(float width, float height, float depth) {
     return data;
 }
 
+ShapeData ShapeFactory::createGridPlane(float width, float depth, int xSegments, int zSegments) {
+    ShapeData data;
+    if (xSegments < 1) xSegments = 1;
+    if (zSegments < 1) zSegments = 1;
+
+    float halfWidth = width / 2.0f;
+    float halfDepth = depth / 2.0f;
+    float cellWidth = width / static_cast<float>(xSegments);
+    float cellDepth = depth / static_cast<float>(zSegments);
+
+    for (int x = 0; x < xSegments; ++x) {
+        for (int z = 0; z < zSegments; ++z) {
+            float x0 = -halfWidth + x * cellWidth;
+            float x1 = x0 + cellWidth;
+            float z0 = -halfDepth + z * cellDepth;
+            float z1 = z0 + cellDepth;
+
+            float v0[] = {x0, 0.0f, z0};
+            float v1[] = {x1, 0.0f, z0};
+            float v2[] = {x1, 0.0f, z1};
+            float v3[] = {x0, 0.0f, z1};
+
+            addTri(data, v0, v1, v2);
+            addTri(data, v0, v2, v3);
+        }
+    }
+
+    return data;
+}
+
 ShapeData ShapeFactory::createCylinder(float radius, float height, int slices) {
     ShapeData data;
     if (slices < 3) slices = 3;

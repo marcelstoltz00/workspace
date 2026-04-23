@@ -10,6 +10,7 @@ struct ShapeData {
 class ShapeFactory {
 public:
     static ShapeData createCuboid(float width, float height, float depth);
+    static ShapeData createGridPlane(float width, float depth, int xSegments, int zSegments);
     static ShapeData createCylinder(float radius, float height, int slices);
     static ShapeData createCone(float radius, float height, int slices);
     static ShapeData createTriangularPrism(float base, float height, float depth);

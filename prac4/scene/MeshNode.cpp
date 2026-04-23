@@ -2,7 +2,7 @@
 #include <GL/glew.h>
 #include <vector>
 
-MeshNode::MeshNode(const ShapeData& shapeData, const Vector<3>& color) : hasOutline(false), receivesLight(false), opacity(1.0f), primitiveType(GL_TRIANGLES) {
+MeshNode::MeshNode(const ShapeData& shapeData, const Vector<3>& color) : hasOutline(false), receivesLight(false), opacity(1.0f), objectKind(0), primitiveType(GL_TRIANGLES) {
     baseColor = color;
     setupBuffers(shapeData);
     setupWireBuffers(shapeData);
@@ -73,6 +73,7 @@ void MeshNode::draw(unsigned int shaderProgram, bool isWireframe) {
     int colorLocation = glGetUniformLocation(shaderProgram, "objectColor");
     int receiveLightLocation = glGetUniformLocation(shaderProgram, "receivesLight");
     int alphaLocation = glGetUniformLocation(shaderProgram, "objectAlpha");
+    int objectKindLocation = glGetUniformLocation(shaderProgram, "objectKind");
     
     float flatMatrix[16];
     int k = 0;
@@ -84,6 +85,7 @@ void MeshNode::draw(unsigned int shaderProgram, bool isWireframe) {
     glUniformMatrix4fv(matrixLocation, 1, GL_FALSE, flatMatrix);
     glUniform1i(receiveLightLocation, receivesLight ? 1 : 0);
     glUniform1f(alphaLocation, opacity);
+    glUniform1i(objectKindLocation, objectKind);
 
     bool translucentFill = (!isWireframe && opacity < 0.999f);
     if (translucentFill) {

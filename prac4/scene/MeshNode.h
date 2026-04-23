@@ -16,6 +16,7 @@ private:
     bool hasOutline;
     bool receivesLight;
     float opacity;
+    int objectKind;
 
     unsigned int primitiveType;
 
@@ -27,9 +28,11 @@ public:
     ~MeshNode();
 
     void setPrimitiveType(unsigned int type) { primitiveType = type; }
+    void setBaseColor(const Vector<3>& color) { baseColor = color; }
     void setOutline(const Vector<3>& color) { outlineColor = color; hasOutline = true; }
     void setReceivesLight(bool value) { receivesLight = value; }
     void setOpacity(float value) { opacity = value; }
+    void setObjectKind(int value) { objectKind = value; }
 
     void draw(unsigned int shaderProgram, bool isWireframe) override;
     
