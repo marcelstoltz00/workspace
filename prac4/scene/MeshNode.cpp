@@ -126,18 +126,6 @@ void MeshNode::draw(unsigned int shaderProgram, bool isWireframe) {
         glUniform3f(colorLocation, baseColor[0], baseColor[1], baseColor[2]);
         glBindVertexArray(VAO);
         glDrawArrays(primitiveType, 0, vertexCount);
-        
-        if (hasOutline) {
-            glUniform3f(colorLocation, outlineColor[0], outlineColor[1], outlineColor[2]);
-            glLineWidth(2.0f);
-            glBindVertexArray(wireVAO);
-            glDisableVertexAttribArray(1);
-            glDisableVertexAttribArray(2);
-            glVertexAttrib1f(1, 1.0f);
-            glVertexAttrib1f(2, 1.0f);
-            glDrawArrays(GL_LINES, 0, wireVertexCount);
-            glLineWidth(1.0f);
-        }
     }
     
     glBindVertexArray(0);

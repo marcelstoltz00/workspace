@@ -108,12 +108,12 @@ void applyCpuTextureMaps(ShapeData& sphere,
 
         if (useColorTexture) {
             float colorLum = sampleImageLuminance(colorMap, u, v);
-            sphere.shadeFactors[i] = 0.30f + 0.70f * colorLum;
+            sphere.shadeFactors[i] = 0.15f + 0.85f * colorLum;
         }
 
         if (useDisplacementTexture) {
             float displacementLum = sampleImageLuminance(displacementMap, u, v);
-            float dimpleDepth = (1.0f - displacementLum) * 0.28f;
+            float dimpleDepth = (1.0f - displacementLum) * 0.34f;
             float scale = 1.0f - dimpleDepth;
             sphere.vertices[i * 3] *= scale;
             sphere.vertices[i * 3 + 1] *= scale;
@@ -141,7 +141,7 @@ SceneManager::SceneManager()
       ballLongitudeSegments(36),
       floorXSegments(8),
       floorZSegments(8),
-      ballOpacity(0.62f),
+      ballOpacity(0.78f),
       isWireframeMode(false),
       enterPressed(false),
       floorColorPrevPressed(false),
@@ -163,10 +163,10 @@ SceneManager::SceneManager()
       useColorTexture(false),
       useDisplacementTexture(false),
       useAlphaTexture(false) {
-    cameraPos = Vector<3>({0.0f, -1.15f, -5.2f});
+    cameraPos = Vector<3>({0.0f, -1.05f, -4.3f});
     scenePos = Vector<3>({0.0f, 0.0f, 0.0f});
     sceneRot = Vector<3>({28.0f, 0.0f, 0.0f});
-    initialLightPos = Vector<3>({0.0f, 0.12f, 0.0f});
+    initialLightPos = Vector<3>({0.0f, 0.22f, 0.0f});
     lightPos = initialLightPos;
     secondLightPos = Vector<3>({0.28f, 0.34f, 0.22f});
     secondLightColor = Vector<3>({0.30f, 0.55f, 1.00f});
@@ -194,7 +194,7 @@ void SceneManager::buildScene() {
     floorMesh->setObjectKind(1);
     rootNode->addChild(floorMesh);
 
-    float ballRadius = 0.12f;
+    float ballRadius = 0.22f;
     ballMesh = new MeshNode(sphere, surfaceColorPresets[ballColorIndex]);
     ballMesh->setLocalTransform(
         Matrix<4,4>::translate(0.0f, ballRadius, 0.0f) *
@@ -499,7 +499,7 @@ void SceneManager::resetSceneState() {
     ballLongitudeSegments = 36;
     floorXSegments = 8;
     floorZSegments = 8;
-    ballOpacity = 0.62f;
+    ballOpacity = 0.78f;
     useColorTexture = false;
     useDisplacementTexture = false;
     useAlphaTexture = false;
