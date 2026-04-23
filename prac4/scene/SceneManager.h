@@ -46,9 +46,15 @@ private:
 	bool ballResolutionDownPressed;
 	bool floorResolutionUpPressed;
 	bool floorResolutionDownPressed;
+	bool colorTexturePressed;
+	bool displacementTexturePressed;
+	bool alphaTexturePressed;
 	bool alphaUpPressed;
 	bool alphaDownPressed;
 	bool resetPressed;
+	bool useColorTexture;
+	bool useDisplacementTexture;
+	bool useAlphaTexture;
 
 	void initializeColorPresets();
 	void applyCurrentColors();

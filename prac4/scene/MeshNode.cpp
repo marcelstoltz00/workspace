@@ -11,6 +11,8 @@ MeshNode::MeshNode(const ShapeData& shapeData, const Vector<3>& color) : hasOutl
 MeshNode::~MeshNode() {
     glDeleteVertexArrays(1, &VAO);
     glDeleteBuffers(1, &VBO);
+    glDeleteBuffers(1, &shadeVBO);
+    glDeleteBuffers(1, &alphaVBO);
     glDeleteVertexArrays(1, &wireVAO);
     glDeleteBuffers(1, &wireVBO);
 }
@@ -28,6 +30,26 @@ void MeshNode::setupBuffers(const ShapeData& data) {
     
     glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(float), (void*)0);
     glEnableVertexAttribArray(0);
+
+    std::vector<float> shadeData = data.shadeFactors;
+    if (shadeData.empty()) {
+        shadeData.assign(vertexCount, 1.0f);
+    }
+    glGenBuffers(1, &shadeVBO);
+    glBindBuffer(GL_ARRAY_BUFFER, shadeVBO);
+    glBufferData(GL_ARRAY_BUFFER, shadeData.size() * sizeof(float), shadeData.data(), GL_STATIC_DRAW);
+    glVertexAttribPointer(1, 1, GL_FLOAT, GL_FALSE, sizeof(float), (void*)0);
+    glEnableVertexAttribArray(1);
+
+    std::vector<float> alphaData = data.alphaFactors;
+    if (alphaData.empty()) {
+        alphaData.assign(vertexCount, 1.0f);
+    }
+    glGenBuffers(1, &alphaVBO);
+    glBindBuffer(GL_ARRAY_BUFFER, alphaVBO);
+    glBufferData(GL_ARRAY_BUFFER, alphaData.size() * sizeof(float), alphaData.data(), GL_STATIC_DRAW);
+    glVertexAttribPointer(2, 1, GL_FLOAT, GL_FALSE, sizeof(float), (void*)0);
+    glEnableVertexAttribArray(2);
     
     glBindVertexArray(0);
 }
@@ -95,6 +117,10 @@ void MeshNode::draw(unsigned int shaderProgram, bool isWireframe) {
     if (isWireframe) {
         glUniform3f(colorLocation, baseColor[0], baseColor[1], baseColor[2]);
         glBindVertexArray(wireVAO);
+        glDisableVertexAttribArray(1);
+        glDisableVertexAttribArray(2);
+        glVertexAttrib1f(1, 1.0f);
+        glVertexAttrib1f(2, 1.0f);
         glDrawArrays(GL_LINES, 0, wireVertexCount);
     } else {
         glUniform3f(colorLocation, baseColor[0], baseColor[1], baseColor[2]);
@@ -105,6 +131,10 @@ void MeshNode::draw(unsigned int shaderProgram, bool isWireframe) {
             glUniform3f(colorLocation, outlineColor[0], outlineColor[1], outlineColor[2]);
             glLineWidth(2.0f);
             glBindVertexArray(wireVAO);
+            glDisableVertexAttribArray(1);
+            glDisableVertexAttribArray(2);
+            glVertexAttrib1f(1, 1.0f);
+            glVertexAttrib1f(2, 1.0f);
             glDrawArrays(GL_LINES, 0, wireVertexCount);
             glLineWidth(1.0f);
         }

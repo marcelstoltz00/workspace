@@ -13,6 +13,15 @@ static void addTri(ShapeData& data, const float v1[3], const float v2[3], const 
     data.vertices.push_back(v3[0]); data.vertices.push_back(v3[1]); data.vertices.push_back(v3[2]);
 }
 
+static void addTriUV(ShapeData& data,
+                     const float v1[3], const float v2[3], const float v3[3],
+                     const float uv1[2], const float uv2[2], const float uv3[2]) {
+    addTri(data, v1, v2, v3);
+    data.texCoords.push_back(uv1[0]); data.texCoords.push_back(uv1[1]);
+    data.texCoords.push_back(uv2[0]); data.texCoords.push_back(uv2[1]);
+    data.texCoords.push_back(uv3[0]); data.texCoords.push_back(uv3[1]);
+}
+
 ShapeData ShapeFactory::createCuboid(float width, float height, float depth) {
     ShapeData data;
     
@@ -206,9 +215,19 @@ ShapeData ShapeFactory::createSphere(float radius, int lats, int longs) {
             float y4 = radius * std::cos(phi2);
             float z4 = radius * std::sin(phi2) * std::sin(theta2);
 
+            float u1 = float(j) / float(longs);
+            float u2 = float(j + 1) / float(longs);
+            float vv1 = float(i) / float(lats);
+            float vv2 = float(i + 1) / float(lats);
+
             float v1[] = {x1, y1, z1}, v2[] = {x2, y2, z2}, v3[] = {x3, y3, z3}, v4[] = {x4, y4, z4};
-            addTri(data, v1, v2, v4);
-            addTri(data, v1, v4, v3);
+            float uv1[] = {u1, vv1};
+            float uv2[] = {u1, vv2};
+            float uv3[] = {u2, vv1};
+            float uv4[] = {u2, vv2};
+
+            addTriUV(data, v1, v2, v4, uv1, uv2, uv4);
+            addTriUV(data, v1, v4, v3, uv1, uv4, uv3);
         }
     }
     return data;

@@ -1,4 +1,133 @@
 #include "SceneManager.h"
+#include <png.h>
+#include <algorithm>
+#include <cstdio>
+#include <vector>
+
+namespace {
+struct CpuImage {
+    int width;
+    int height;
+    std::vector<unsigned char> pixels;
+    bool valid;
+
+    CpuImage() : width(0), height(0), valid(false) {}
+};
+
+CpuImage loadPngImage(const char* path) {
+    CpuImage image;
+
+    FILE* fp = fopen(path, "rb");
+    if (!fp) return image;
+
+    png_structp png = png_create_read_struct(PNG_LIBPNG_VER_STRING, nullptr, nullptr, nullptr);
+    if (!png) {
+        fclose(fp);
+        return image;
+    }
+
+    png_infop info = png_create_info_struct(png);
+    if (!info) {
+        png_destroy_read_struct(&png, nullptr, nullptr);
+        fclose(fp);
+        return image;
+    }
+
+    if (setjmp(png_jmpbuf(png))) {
+        png_destroy_read_struct(&png, &info, nullptr);
+        fclose(fp);
+        return image;
+    }
+
+    png_init_io(png, fp);
+    png_read_info(png, info);
+
+    image.width = static_cast<int>(png_get_image_width(png, info));
+    image.height = static_cast<int>(png_get_image_height(png, info));
+    png_byte colorType = png_get_color_type(png, info);
+    png_byte bitDepth = png_get_bit_depth(png, info);
+
+    if (bitDepth == 16) png_set_strip_16(png);
+    if (colorType == PNG_COLOR_TYPE_PALETTE) png_set_palette_to_rgb(png);
+    if (colorType == PNG_COLOR_TYPE_GRAY && bitDepth < 8) png_set_expand_gray_1_2_4_to_8(png);
+    if (png_get_valid(png, info, PNG_INFO_tRNS)) png_set_tRNS_to_alpha(png);
+    if (colorType == PNG_COLOR_TYPE_RGB || colorType == PNG_COLOR_TYPE_GRAY || colorType == PNG_COLOR_TYPE_PALETTE) {
+        png_set_filler(png, 0xFF, PNG_FILLER_AFTER);
+    }
+    if (colorType == PNG_COLOR_TYPE_GRAY || colorType == PNG_COLOR_TYPE_GRAY_ALPHA) {
+        png_set_gray_to_rgb(png);
+    }
+
+    png_read_update_info(png, info);
+    image.pixels.resize(image.width * image.height * 4);
+    std::vector<png_bytep> rows(image.height);
+    for (int y = 0; y < image.height; ++y) {
+        rows[y] = reinterpret_cast<png_bytep>(&image.pixels[y * image.width * 4]);
+    }
+    png_read_image(png, rows.data());
+
+    png_destroy_read_struct(&png, &info, nullptr);
+    fclose(fp);
+    image.valid = true;
+    return image;
+}
+
+float sampleImageLuminance(const CpuImage& image, float u, float v) {
+    if (!image.valid || image.width <= 0 || image.height <= 0) return 1.0f;
+
+    while (u < 0.0f) u += 1.0f;
+    while (u > 1.0f) u -= 1.0f;
+    v = std::max(0.0f, std::min(1.0f, v));
+
+    int x = static_cast<int>(u * float(image.width - 1));
+    int y = static_cast<int>((1.0f - v) * float(image.height - 1));
+    int index = (y * image.width + x) * 4;
+
+    float r = image.pixels[index] / 255.0f;
+    float g = image.pixels[index + 1] / 255.0f;
+    float b = image.pixels[index + 2] / 255.0f;
+    float a = image.pixels[index + 3] / 255.0f;
+    return ((r + g + b) / 3.0f) * a;
+}
+
+void applyCpuTextureMaps(ShapeData& sphere,
+                         const CpuImage& colorMap,
+                         const CpuImage& displacementMap,
+                         const CpuImage& alphaMap,
+                         bool useColorTexture,
+                         bool useDisplacementTexture,
+                         bool useAlphaTexture,
+                         float sharedAlpha) {
+    int vertexCount = static_cast<int>(sphere.vertices.size() / 3);
+    sphere.shadeFactors.assign(vertexCount, 1.0f);
+    sphere.alphaFactors.assign(vertexCount, 1.0f);
+
+    for (int i = 0; i < vertexCount; ++i) {
+        float u = sphere.texCoords.empty() ? 0.0f : sphere.texCoords[i * 2];
+        float v = sphere.texCoords.empty() ? 0.0f : sphere.texCoords[i * 2 + 1];
+
+        if (useColorTexture) {
+            float colorLum = sampleImageLuminance(colorMap, u, v);
+            sphere.shadeFactors[i] = 0.30f + 0.70f * colorLum;
+        }
+
+        if (useDisplacementTexture) {
+            float displacementLum = sampleImageLuminance(displacementMap, u, v);
+            float dimpleDepth = (1.0f - displacementLum) * 0.28f;
+            float scale = 1.0f - dimpleDepth;
+            sphere.vertices[i * 3] *= scale;
+            sphere.vertices[i * 3 + 1] *= scale;
+            sphere.vertices[i * 3 + 2] *= scale;
+        }
+
+        if (useAlphaTexture) {
+            float alphaLum = sampleImageLuminance(alphaMap, u, v);
+            float dimpleMask = 1.0f - alphaLum;
+            sphere.alphaFactors[i] = 1.0f - dimpleMask * (1.0f - sharedAlpha);
+        }
+    }
+}
+}
 
 SceneManager::SceneManager()
     : rootNode(new SceneNode()),
@@ -8,11 +137,11 @@ SceneManager::SceneManager()
       floorColorIndex(3),
       ballColorIndex(3),
       lightColorIndex(4),
-      ballLatitudeSegments(18),
-      ballLongitudeSegments(18),
+      ballLatitudeSegments(36),
+      ballLongitudeSegments(36),
       floorXSegments(8),
       floorZSegments(8),
-      ballOpacity(0.28f),
+      ballOpacity(0.62f),
       isWireframeMode(false),
       enterPressed(false),
       floorColorPrevPressed(false),
@@ -25,10 +154,16 @@ SceneManager::SceneManager()
       ballResolutionDownPressed(false),
       floorResolutionUpPressed(false),
       floorResolutionDownPressed(false),
+      colorTexturePressed(false),
+      displacementTexturePressed(false),
+      alphaTexturePressed(false),
       alphaUpPressed(false),
       alphaDownPressed(false),
-      resetPressed(false) {
-    cameraPos = Vector<3>({0.0f, -1.8f, -8.5f});
+      resetPressed(false),
+      useColorTexture(false),
+      useDisplacementTexture(false),
+      useAlphaTexture(false) {
+    cameraPos = Vector<3>({0.0f, -1.15f, -5.2f});
     scenePos = Vector<3>({0.0f, 0.0f, 0.0f});
     sceneRot = Vector<3>({28.0f, 0.0f, 0.0f});
     initialLightPos = Vector<3>({0.0f, 0.12f, 0.0f});
@@ -45,9 +180,14 @@ SceneManager::~SceneManager() {
 void SceneManager::buildScene() {
     clearScene();
 
+    CpuImage colorMap = loadPngImage("scene/colour.png");
+    CpuImage displacementMap = loadPngImage("scene/displace.png");
+    CpuImage alphaMap = loadPngImage("scene/alpha.png");
+
     ShapeData floorPlane = ShapeFactory::createGridPlane(6.5f, 6.5f, floorXSegments, floorZSegments);
     ShapeData sphere = ShapeFactory::createSphere(1.0f, ballLatitudeSegments, ballLongitudeSegments);
     ShapeData lightSphere = ShapeFactory::createSphere(1.0f, 12, 12);
+    applyCpuTextureMaps(sphere, colorMap, displacementMap, alphaMap, useColorTexture, useDisplacementTexture, useAlphaTexture, ballOpacity);
 
     floorMesh = new MeshNode(floorPlane, surfaceColorPresets[floorColorIndex]);
     floorMesh->setReceivesLight(true);
@@ -60,7 +200,7 @@ void SceneManager::buildScene() {
         Matrix<4,4>::translate(0.0f, ballRadius, 0.0f) *
         Matrix<4,4>::scale(ballRadius, ballRadius, ballRadius)
     );
-    ballMesh->setOpacity(ballOpacity);
+    ballMesh->setOpacity(useAlphaTexture ? 1.0f : ballOpacity);
     ballMesh->setOutline(surfaceColorPresets[ballColorIndex]);
     ballMesh->setReceivesLight(true);
     ballMesh->setObjectKind(2);
@@ -185,11 +325,36 @@ void SceneManager::processInput(GLFWwindow* window, double deltaTime) {
     }
     floorResolutionDownPressed = isFloorResolutionDownDown;
 
+    bool isColorTextureDown = glfwGetKey(window, GLFW_KEY_B) == GLFW_PRESS;
+    if (isColorTextureDown && !colorTexturePressed) {
+        useColorTexture = !useColorTexture;
+        rebuildScene();
+    }
+    colorTexturePressed = isColorTextureDown;
+
+    bool isDisplacementTextureDown = glfwGetKey(window, GLFW_KEY_N) == GLFW_PRESS;
+    if (isDisplacementTextureDown && !displacementTexturePressed) {
+        useDisplacementTexture = !useDisplacementTexture;
+        rebuildScene();
+    }
+    displacementTexturePressed = isDisplacementTextureDown;
+
+    bool isAlphaTextureDown = glfwGetKey(window, GLFW_KEY_M) == GLFW_PRESS;
+    if (isAlphaTextureDown && !alphaTexturePressed) {
+        useAlphaTexture = !useAlphaTexture;
+        rebuildScene();
+    }
+    alphaTexturePressed = isAlphaTextureDown;
+
     bool isAlphaUpDown = glfwGetKey(window, GLFW_KEY_EQUAL) == GLFW_PRESS;
     if (isAlphaUpDown && !alphaUpPressed) {
         ballOpacity += 0.05f;
         if (ballOpacity > 1.0f) ballOpacity = 1.0f;
-        if (ballMesh) ballMesh->setOpacity(ballOpacity);
+        if (useAlphaTexture) {
+            rebuildScene();
+        } else if (ballMesh) {
+            ballMesh->setOpacity(ballOpacity);
+        }
     }
     alphaUpPressed = isAlphaUpDown;
 
@@ -197,7 +362,11 @@ void SceneManager::processInput(GLFWwindow* window, double deltaTime) {
     if (isAlphaDownDown && !alphaDownPressed) {
         ballOpacity -= 0.05f;
         if (ballOpacity < 0.05f) ballOpacity = 0.05f;
-        if (ballMesh) ballMesh->setOpacity(ballOpacity);
+        if (useAlphaTexture) {
+            rebuildScene();
+        } else if (ballMesh) {
+            ballMesh->setOpacity(ballOpacity);
+        }
     }
     alphaDownPressed = isAlphaDownDown;
 
@@ -326,11 +495,14 @@ void SceneManager::resetSceneState() {
     floorColorIndex = 3;
     ballColorIndex = 3;
     lightColorIndex = 4;
-    ballLatitudeSegments = 18;
-    ballLongitudeSegments = 18;
+    ballLatitudeSegments = 36;
+    ballLongitudeSegments = 36;
     floorXSegments = 8;
     floorZSegments = 8;
-    ballOpacity = 0.28f;
+    ballOpacity = 0.62f;
+    useColorTexture = false;
+    useDisplacementTexture = false;
+    useAlphaTexture = false;
     rebuildScene();
 }
 

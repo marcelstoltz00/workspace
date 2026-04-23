@@ -3,6 +3,15 @@ Golf Ball Texture Map Guide
 Goal:
 Create the three texture maps required by `spec.md` yourself, so you can explain them during the demo and include them in your submission.
 
+Important implementation constraint:
+- treat all three maps as CPU-driven
+- do not make the core solution depend on GPU texture sampling
+- load the PNG files on the CPU, sample them on the CPU, and then push the resulting mesh/color/alpha data to OpenGL buffers
+- in practice:
+  `colour.png` influences CPU-generated sphere colour data
+  `displace.png` influences CPU-generated sphere vertex positions
+  `alpha.png` influences CPU-generated sphere alpha / opacity data
+
 Recommended tools:
 - Krita
 - GIMP
@@ -75,6 +84,7 @@ Important:
 - This map is for geometry displacement, not bump mapping.
 - Your code should move vertices along the sphere normal or radial direction based on the sampled value.
 - Keep the displacement subtle. If it is too strong, the golf ball will look melted.
+- Because the project should stay CPU-driven for these maps, sample `scene/displace.png` on the CPU while building or rebuilding the sphere mesh.
 
 5. Alpha texture map
 Purpose:
@@ -95,6 +105,7 @@ Practical painting recipe:
 Important:
 - This map should use the same dimple positions as the other two maps.
 - The shared runtime alpha value from `+` and `-` should scale the transparency, not replace the map layout.
+- Because the project should stay CPU-driven for these maps, sample `scene/alpha.png` on the CPU and store the result in the sphere data you upload for rendering.
 
 6. Best workflow: create one master dimple layout first
 - Make one high-quality dimple pattern layer.
@@ -137,15 +148,30 @@ Why this helps:
 
 10. Recommended implementation order in code
 1. Add UVs to the sphere
-2. Load and sample the colour map
-3. Add displacement using the grayscale height map
-4. Add alpha map behavior
+2. Add a CPU-side PNG loader / image reader
+3. Load `scene/colour.png`, `scene/displace.png`, and `scene/alpha.png` into CPU memory
+4. Sample the colour map on the CPU and derive sphere colour data
+5. Sample the displacement map on the CPU and rebuild sphere vertex positions
+6. Sample the alpha map on the CPU and derive sphere transparency data
 5. Bind the required keys:
    `B` colour texture toggle
    `N` displacement toggle
    `M` alpha texture toggle
 
-11. Practical tip
+11. CPU-side strategy to follow
+- Start from the sphere UV coordinates.
+- For each sphere vertex:
+  compute `(u, v)`
+  look up the matching pixel in `scene/colour.png`
+  look up the matching pixel in `scene/displace.png`
+  look up the matching pixel in `scene/alpha.png`
+- Then:
+  adjust the vertex colour from the colour map
+  adjust the vertex position from the displacement map
+  adjust the vertex alpha behavior from the alpha map
+- After toggles change, rebuild or refresh the sphere data on the CPU and upload the updated buffer again.
+
+12. Practical tip
 - Do one small test texture first, even if it looks rough.
 - Once the mapping works on the sphere, improve the artwork.
 - That is much safer than spending time painting detailed textures before confirming the UV pipeline is correct.

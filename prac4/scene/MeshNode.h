@@ -8,6 +8,7 @@
 class MeshNode : public SceneNode {
 private:
     unsigned int VAO, VBO;
+    unsigned int shadeVBO, alphaVBO;
     unsigned int wireVAO, wireVBO;
     int vertexCount;
     int wireVertexCount;

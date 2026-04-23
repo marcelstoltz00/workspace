@@ -5,6 +5,9 @@
 
 struct ShapeData {
     std::vector<float> vertices; 
+    std::vector<float> texCoords;
+    std::vector<float> shadeFactors;
+    std::vector<float> alphaFactors;
 };
 
 class ShapeFactory {

@@ -14,6 +14,8 @@ uniform float ballAlpha;
 
 in vec3 fragPosition;
 in vec3 localPosition;
+in float fragShadeFactor;
+in float fragAlphaFactor;
 out vec4 fragColor;
 
 vec3 accumulatePointLight(vec3 activeLightPosition, vec3 activeLightColor, vec3 normalDir, vec3 filterColor)
@@ -28,7 +30,8 @@ vec3 accumulatePointLight(vec3 activeLightPosition, vec3 activeLightColor, vec3 
 
 void main()
 {
-    vec3 finalColor = objectColor;
+    vec3 shadedObjectColor = objectColor * fragShadeFactor;
+    vec3 finalColor = shadedObjectColor;
 
     if (receivesLight == 1) {
         vec3 normalDir = vec3(0.0, 1.0, 0.0);
@@ -36,7 +39,7 @@ void main()
             normalDir = normalize(localPosition);
         }
 
-        vec3 ambient = ambientStrength * objectColor;
+        vec3 ambient = ambientStrength * shadedObjectColor;
         vec3 ballFilter = mix(vec3(1.0), ballTintColor, clamp(ballAlpha, 0.0, 1.0) * 0.75);
         vec3 projectedLight = accumulatePointLight(lightPosition, lightColor, normalDir, ballFilter);
         vec3 secondaryLight = accumulatePointLight(secondLightPosition, secondLightColor, normalDir, ballFilter);
@@ -44,5 +47,5 @@ void main()
         finalColor = ambient + projectedLight + secondaryLight;
     }
 
-    fragColor = vec4(finalColor, objectAlpha);
+    fragColor = vec4(finalColor, objectAlpha * fragAlphaFactor);
 }

@@ -60,19 +60,33 @@ Render a semi-translucent 3D glass golf ball resting on a flat plane, with a poi
 1. `B` toggles colour texture:
    off = uniform translucent ball colour
    on = dimples appear darker
-   implementation note: CPU re-evaluates the colour contribution when toggled
+   implementation note:
+   CPU samples `scene/colour.png`
+   CPU updates sphere colour data
+   GPU only renders the already-updated sphere data
 2. `N` toggles displacement texture:
    off = smooth ball
    on = actual surface geometry shows dimples
-   implementation note: CPU rebuilds sphere vertex positions when toggled
+   implementation note:
+   CPU samples `scene/displace.png`
+   CPU rebuilds sphere vertex positions from the smooth base sphere
+   GPU only draws the rebuilt mesh
 3. `M` toggles alpha texture:
    off = whole ball uses shared alpha value
    on = only dimple regions use shared alpha, rest of ball fully opaque
-   implementation note: CPU updates per-vertex alpha-related data when toggled
+   implementation note:
+   CPU samples `scene/alpha.png`
+   CPU updates the sphere alpha/transparency data
+   non-dimple regions stay opaque when alpha texturing is enabled
 4. `+` and `-` control the shared alpha value used by the ball
    this same alpha value must be respected by the alpha texture mode too
+   implementation note:
+   when `M` is off, the shared alpha applies to the whole ball
+   when `M` is on, the shared alpha only scales the dimple transparency contribution
 5. Checkpoint:
-   each toggle independently changes exactly the behavior described in `spec.md`
+   `B`, `N`, and `M` each work independently
+   all three remain CPU-driven
+   the visual result matches `spec.md` exactly
 
 6. Colour requirements
 1. Define required floor palette:
