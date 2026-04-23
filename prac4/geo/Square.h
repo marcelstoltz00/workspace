@@ -1,0 +1,42 @@
+#ifndef SQUARE_H
+#define SQUARE_H
+
+#include "../math/Matrix.h"
+#include "../math/Vector.h"
+#include "Shape.h"
+
+using namespace std;
+
+template <int n>
+class Square: public Shape<n> {
+    private:
+        Vector<n> tl;
+        Vector<n> tr;
+        Vector<n> br;
+        Vector<n> bl;
+    public:
+        Square(const Vector<n>& center, float height, float width);
+        Square(const Vector<n>& tl, const Vector<n>& tr, const Vector<n>& br, const Vector<n>& bl);
+        Square(const Square<n>&);
+        virtual Square<n>& operator*=(const Matrix<n,n>&);
+        virtual Square<n>* operator*(const Matrix<n,n>&) const;
+        virtual float* getPoints() const;
+        virtual int getNumPoints() const;
+
+        virtual void print() const{
+            cout << "_ P1 _ " << endl;
+            tl.print();
+            cout << "_ P2 _ " << endl;
+            tr.print();
+            cout << "_ P3 _ " << endl;
+            br.print();
+            cout << "_ P4 _ " << endl;
+            bl.print();
+        }
+        virtual ~Square() {};
+};
+    #ifndef SQUARE_CPP_COMPILATION_UNIT
+#include "Square.cpp"
+    #endif
+
+#endif /*SQUARE_H*/
